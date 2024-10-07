@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Infinite IF | Interactive Fiction App Powered by AI | Chimeric AI</title>
+    <meta name="description" content="Infinite IF is an interactive fiction app powered by AI, offering endless storytelling possibilities. Dive into unique adventures or create your own, all driven by advanced language models. Imagined by Hans Scharler, LightFun Games, and Chimeric AI">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="assets/images/icons/if-icon.svg" type="image/svg+xml">
+    <link rel="manifest" href="manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/styles.css?v=1.0.0">
+</head>
+<body>
+    <nav>
+        <div class="nav-content">
+            <a href="#" id="nav-home-link" title="Infinite IF | Interactive Fiction App Powered by AI">
+                <img src="assets/images/icons/if-icon.svg" alt="Infinite IF">
+                <span>Infinite IF</span>
+            </a>
+        </div>
+        <div id="loading-spinner">
+            <span class="material-symbols-outlined">hourglass_empty</span>
+        </div>
+        <span class="material-symbols-outlined" id="saved-stories-icon">list_alt</span>
+        <span class="material-symbols-outlined" id="reload-icon">refresh</span>
+        <span class="material-symbols-outlined" id="settings-icon">settings</span>
+    </nav>
+    <div id="start-screen">
+        <div id="start-buttons">
+            <button data-seed="A mysterious forest" data-icon="forest">
+                <span class="material-symbols-outlined">forest</span>
+                Explore a Mysterious Forest
+            </button>
+            <button data-seed="An abandoned spaceship" data-icon="rocket_launch">
+                <span class="material-symbols-outlined">rocket_launch</span>
+                Investigate an Abandoned Spaceship
+            </button>
+            <button data-seed="A medieval castle" data-icon="castle">
+                <span class="material-symbols-outlined">castle</span>
+                Enter a Medieval Castle
+            </button>
+            <button data-seed="A haunted mansion" data-icon="home">
+                <span class="material-symbols-outlined">home</span>
+                Explore a Haunted Mansion
+            </button>
+            <button data-seed="A pirate ship" data-icon="directions_boat">
+                <span class="material-symbols-outlined">directions_boat</span>
+                Sail on a Pirate Ship
+            </button>
+            <button data-seed="A futuristic city" data-icon="location_city">
+                <span class="material-symbols-outlined">location_city</span>
+                Discover a Futuristic City
+            </button>
+            <button data-seed="An ancient Egyptian tomb" data-icon="account_balance">
+                <span class="material-symbols-outlined">account_balance</span>
+                Uncover an Ancient Egyptian Tomb
+            </button>
+            <button data-seed="A secret underground laboratory" data-icon="science">
+                <span class="material-symbols-outlined">science</span>
+                Infiltrate a Secret Underground Lab
+            </button>
+            <button id="custom-scenario-button">
+                <span class="material-symbols-outlined">edit</span>
+                Create Your Own Adventure
+            </button>
+        </div>
+        <p class="footer-text">
+            <span class="material-symbols-outlined footer-icons">hotel_class</span>
+            <span>Surprises are possible.</span>
+            <span class="material-symbols-outlined footer-icons">view_list</span>
+            <span>v1.0.0</span>
+            <span class="material-symbols-outlined footer-icons">developer_mode</span>
+            <a href="https://nothans.com/ai" target="_blank">NotHans</a>
+        </p>
+    </div>
+    <div id="game-container" style="display: none;">
+        <div id="story"></div>
+        <div id="options-and-input">
+            <button id="restart-button" style="display: none;">
+                <span class="material-symbols-outlined" id="reload-icon">refresh</span> Start a New Story
+            </button>
+            <div class="scroll-arrow left" id="scroll-left" style="display: none;">
+                <span class="material-symbols-outlined">chevron_left</span>
+            </div>
+            <div id="options"></div>
+            <div class="scroll-arrow right" id="scroll-right" style="display: none;">
+                <span class="material-symbols-outlined">chevron_right</span>
+            </div>
+            <div id="input-area">
+                <input type="text" id="user-input" placeholder="Type your choice here...">
+                <button id="submit-button">
+                    <span class="material-symbols-outlined">send</span>
+                </button>
+                <button id="end-story-button" title="End story">
+                    End Story
+                </button>                
+            </div>
+        </div>
+    </div>    
+    <div id="settings-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Settings</h2>
+            <div class="settings-group">
+                <label for="api-key-input">OpenAI API Key:</label>
+                <input type="text" id="api-key-input" placeholder="Enter your OpenAI API Key">
+            </div>
+            <div class="settings-group">
+                <label for="tts-checkbox">Enable Text-to-Speech:</label>
+                <input type="checkbox" id="tts-checkbox">
+            </div>
+            <div class="settings-group" id="voice-selection-group" style="display: none;">
+                <label for="voice-select">Select Voice:</label>
+                <select id="voice-select">
+                    <option value="alloy">Alloy</option>
+                    <option value="echo">Echo</option>
+                    <option value="fable">Fable</option>
+                    <option value="onyx" selected>Onyx</option>
+                    <option value="nova">Nova</option>
+                    <option value="shimmer">Shimmer</option>
+                </select>
+            </div>
+            <div class="settings-group">
+                <label for="writing-style-input">Writing Style:</label>
+                <input type="text" id="writing-style-input" placeholder="Enter a custom writing style" value="">
+            </div>
+            <button id="save-settings-button">Save Settings</button>
+        </div>
+    </div>
+
+    <div id="saved-stories-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Saved Stories</h2>
+            <div id="saved-stories-list"></div>
+        </div>
+    </div>
+
+    <div id="story-view-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="story-view-title"></h2>
+            <div id="story-view-content"></div>
+        </div>
+    </div>
+
+    <script src="assets/js/icons.js?v=1.0.0"></script>
+    <script src="assets/js/app.js?v=1.0.0"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/timeago.js/4.0.2/timeago.min.js"></script>
+</body>
+</html>
