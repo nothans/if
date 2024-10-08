@@ -68,7 +68,7 @@
             <span class="material-symbols-outlined footer-icons">hotel_class</span>
             <span>Surprises are possible.</span>
             <span class="material-symbols-outlined footer-icons">view_list</span>
-            <span>v1.0.0</span>
+            <span>v1.0.1</span>
             <span class="material-symbols-outlined footer-icons">developer_mode</span>
             <a href="https://nothans.com/ai" target="_blank">NotHans</a>
         </p>
@@ -102,10 +102,23 @@
             <span class="close">&times;</span>
             <h2>Settings</h2>
             <div class="settings-group">
-                <label for="api-key-input">OpenAI API Key:</label>
-                <input type="text" id="api-key-input" placeholder="Enter your OpenAI API Key">
+                <label for="ai-service-select">AI Service Provider:</label>
+                <select id="ai-service-select">
+                    <option value="openai">OpenAI</option>
+                    <option value="azure">Azure OpenAI</option>
+                </select>
             </div>
-            <div class="settings-group">
+            <div class="settings-group" id="openai-key-group">
+                <label for="openai-key-input">OpenAI API Key:</label>
+                <input type="text" id="openai-key-input" placeholder="Enter your OpenAI API Key">
+            </div>
+            <div class="settings-group" id="azure-settings-group" style="display: none;">
+                <label for="azure-endpoint-input">Azure OpenAI Endpoint URL:</label>
+                <input type="text" id="azure-endpoint-input" placeholder="Enter your Azure OpenAI Endpoint URL">
+                <label for="azure-key-input">Azure OpenAI Key:</label>
+                <input type="text" id="azure-key-input" placeholder="Enter your Azure OpenAI Key">
+            </div>
+            <div class="settings-group" id="tts-group">
                 <label for="tts-checkbox">Enable Text-to-Speech:</label>
                 <input type="checkbox" id="tts-checkbox">
             </div>
@@ -144,8 +157,8 @@
         </div>
     </div>
 
-    <script src="assets/js/icons.js?v=1.0.0"></script>
-    <script src="assets/js/app.js?v=1.0.0"></script>
+    <script src="assets/js/icons.js?v=1.0.1"></script>
+    <script src="assets/js/app.js?v=1.0.1"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/timeago.js/4.0.2/timeago.min.js"></script>
 </body>
 </html>

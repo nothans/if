@@ -1,5 +1,8 @@
 // Settings Management
-let apiKey = '';
+let aiService = 'openai';
+let azureEndpoint = '';
+let azureKey = '';
+let openaiKey = '';
 let ttsEnabled = false;
 let ttsVoice = 'onyx';
 let writingStyle = '';
@@ -8,38 +11,36 @@ let storyInProgress = false;
 function loadSettings() {
     const settings = JSON.parse(localStorage.getItem('infinite-if-settings')) || {};
 
-    apiKey = settings.apiKey || '';
+    aiService = settings.aiService || 'openai';
+    openaiKey = settings.openaiKey || '';
+    azureEndpoint = settings.azureEndpoint || '';
+    azureKey = settings.azureKey || '';
     ttsEnabled = settings.ttsEnabled || false;
     writingStyle = settings.writingStyle || '';
     ttsVoice = settings.ttsVoice || 'onyx';
 
-    document.getElementById('api-key-input').value = apiKey;
+    document.getElementById('ai-service-select').value = aiService;
+    document.getElementById('openai-key-input').value = openaiKey;
+    document.getElementById('azure-endpoint-input').value = azureEndpoint;
+    document.getElementById('azure-key-input').value = azureKey;
     document.getElementById('tts-checkbox').checked = ttsEnabled;
     document.getElementById('voice-select').value = ttsVoice;
     document.getElementById('writing-style-input').value = writingStyle;
 
-    if (ttsEnabled) {
-        document.getElementById('voice-selection-group').style.display = 'block';
-    } else {
-        document.getElementById('voice-selection-group').style.display = 'none';
-    }
+    updateSettingsModal();
+}
+
+function updateSettingsModal() {
+    const isOpenAI = aiService === 'openai';
+    document.getElementById('openai-key-group').style.display = isOpenAI ? 'block' : 'none';
+    document.getElementById('azure-settings-group').style.display = isOpenAI ? 'none' : 'block';
+    document.getElementById('tts-group').style.display = isOpenAI ? 'block' : 'none';
+    document.getElementById('voice-selection-group').style.display = isOpenAI && ttsEnabled ? 'block' : 'none';
 }
 
 function saveSettings(settings) {
     localStorage.setItem('infinite-if-settings', JSON.stringify(settings));
     loadSettings();
-}
-
-// Initialize Settings on Startup
-loadSettings();
-
-if (!apiKey) {
-    const enteredApiKey = prompt('Please enter your OpenAI API Key:');
-    if (enteredApiKey) {
-        saveSettings({ apiKey: enteredApiKey, ttsEnabled, writingStyle });
-    } else {
-        alert('API Key is required.');
-    }
 }
 
 // Game Elements
@@ -55,6 +56,10 @@ const optionsAndInputDiv = document.getElementById('options-and-input');
 const inputArea = document.getElementById('input-area');
 const restartButton = document.getElementById('restart-button');
 const loadingSpinner = document.getElementById('loading-spinner');
+const settingsIcon = document.getElementById('settings-icon');
+const settingsModal = document.getElementById('settings-modal');
+const closeModal = document.querySelector('.close');
+const saveSettingsButton = document.getElementById('save-settings-button');
 
 // Game State
 let gameState = {
@@ -64,6 +69,13 @@ let gameState = {
     lastIcon: '',
     storyContent: [],
 };
+
+// Initialize Settings on Startup
+loadSettings();
+
+if (!openaiKey || !azureKey) {
+    settingsModal.style.display = 'block';
+}
 
 // Utility Functions
 function validateIcon(iconName) {
@@ -82,12 +94,12 @@ function appendStory(text, iconClass) {
 }
 
 function convertTextToSpeech(text) {
-    if (!ttsEnabled) return;
+    if (!ttsEnabled || aiService !== 'openai') return;
 
     fetch('https://api.openai.com/v1/audio/speech', {
         method: 'POST',
         headers: {
-            'Authorization': 'Bearer ' + apiKey,
+            'Authorization': 'Bearer ' + openaiKey,
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -150,7 +162,7 @@ function handleOptionSelection(optionText, optionIcon) {
     scrollRightBtn.style.display = 'none';    
     gameState.history.push(optionText);
     gameState.lastIcon = optionIcon || 'help_outline';
-    sendRequestToOpenAI(optionText, false, optionIcon);
+    sendRequestToAIService(optionText, false, optionIcon);
 }
 
 // Loading Indicators
@@ -168,106 +180,119 @@ function hideLoading() {
     userInput.disabled = false;
 }
 
-// OpenAI API Interaction
-function sendRequestToOpenAI(userChoice, endStory = false, userIcon = '') {
-showLoading();
+// AI Service Interaction
+function sendRequestToAIService(userChoice, endStory = false, userIcon = '') {
+    showLoading();
 
-let writingStyleInstruction = '';
-if (writingStyle) {
-    writingStyleInstruction = `Writing style: ${writingStyle}`;
-}
-
-let content;
-if (gameState.history.length === 0) {
-    content = `Begin a story based on the seed idea: "${gameState.seedIdea}". Use the icon "${userIcon}" for the initial description.`;
-}
-
-if (endStory) {
-    content = `Provide an epic conclusion to the story so far, based on the player's history: ${gameState.history.join(' -> ')}. Seed idea: "${gameState.seedIdea}". Wrap up all loose ends and provide a satisfying ending.`;
-    if (userIcon) {
-        content += ` Use the icon "${userIcon}" for the epic conclusion.`;
+    let writingStyleInstruction = '';
+    if (writingStyle) {
+        writingStyleInstruction = `Writing style: ${writingStyle}`;
     }
-} else if (userIcon) {
-    content = `The player is at "${gameState.location}". They chose to "${userChoice}" with icon "${userIcon}". Continue the story using this icon. Seed idea: "${gameState.seedIdea}"`;
-} else {
-    content = `The player is at "${gameState.location}". They chose to "${userChoice}". Recommend an icon for this choice. What happens next? Seed idea: "${gameState.seedIdea}"`;
-}
 
-const messages = [
+    let content;
+    if (gameState.history.length === 0) {
+        content = `Begin a story based on the seed idea: "${gameState.seedIdea}". Use the icon "${userIcon}" for the initial description.`;
+    }
+
+    if (endStory) {
+        content = `Provide an epic conclusion to the story so far, based on the player's history: ${gameState.history.join(' -> ')}. Seed idea: "${gameState.seedIdea}". Wrap up all loose ends and provide a satisfying ending.`;
+        if (userIcon) {
+            content += ` Use the icon "${userIcon}" for the epic conclusion.`;
+        }
+    } else if (userIcon) {
+        content = `The player is at "${gameState.location}". They chose to "${userChoice}" with icon "${userIcon}". Continue the story using this icon. Seed idea: "${gameState.seedIdea}"`;
+    } else {
+        content = `The player is at "${gameState.location}". They chose to "${userChoice}". Recommend an icon for this choice. What happens next? Seed idea: "${gameState.seedIdea}"`;
+    }
+
+    const messages = [
+        {
+            role: 'system',
+            content: `You are an interactive fiction game engine. Avoid repeating parts of the story. Incorporate the user action into the story segment. ${writingStyleInstruction} Generate engaging descriptions and navigation options in JSON format only. Do not include any additional text outside the JSON. The JSON format should be:
+
     {
-        role: 'system',
-        content: `You are an interactive fiction game engine. Avoid repeating parts of the story. Incorporate the user action into the story segment. ${writingStyleInstruction} Generate engaging descriptions and navigation options in JSON format only. Do not include any additional text outside the JSON. The JSON format should be:
+    "description": "...",
+    "icon": "material-icon-name",
+    "options": [
+    {"text": "option1", "icon": "material-icon1"},
+    {"text": "option2", "icon": "material-icon2"},
+    ...
+    ],
+    "location": "..."
+    }
 
-{
-"description": "...",
-"icon": "material-icon-name",
-"options": [
-{"text": "option1", "icon": "material-icon1"},
-{"text": "option2", "icon": "material-icon2"},
-...
-],
-"location": "..."
-}
+    Provide an appropriate Material Symbol name for the description and for each option that matches the content. Use valid Material Symbols names like "forest", "rocket_launch", "emoji_nature", etc.`,
+        },
+    ];
 
-Provide an appropriate Material Symbol name for the description and for each option that matches the content. Use valid Material Symbols names like "forest", "rocket_launch", "emoji_nature", etc.`,
-    },
-];
-
-gameState.storyContent.forEach((segment, index) => {
-    messages.push({
-        role: 'assistant',
-        content: `Description: ${segment.text}\nIcon: ${segment.iconClass}\nPrevious Option: ${gameState.history[index-1] || 'None'}\nSeed Idea: ${gameState.seedIdea}`
+    gameState.storyContent.forEach((segment, index) => {
+        messages.push({
+            role: 'assistant',
+            content: `Description: ${segment.text}\nIcon: ${segment.iconClass}\nPrevious Option: ${gameState.history[index-1] || 'None'}\nSeed Idea: ${gameState.seedIdea}`
+        });
     });
-});
 
-messages.push({
-    role: 'user',
-    content: content,
-});
+    messages.push({
+        role: 'user',
+        content: content,
+    });
 
-fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-        'Authorization': 'Bearer ' + apiKey,
-        'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: messages,
-        temperature: 0.7,
-    }),
-    timeout: 10000,
-})
-.then(response => response.json())
-.then(data => {
-    hideLoading();
-    if (data.error) {
+    let endpoint, headers;
+
+    if (aiService === 'openai') {
+        endpoint = 'https://api.openai.com/v1/chat/completions';
+        headers = {
+            'Authorization': 'Bearer ' + openaiKey,
+            'Content-Type': 'application/json',
+        };
+    } else {
+        endpoint = azureEndpoint;
+        headers = {
+            'api-key': azureKey,
+            'Content-Type': 'application/json',
+        };
+    }
+
+    fetch(endpoint, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify({
+            model: 'gpt-4o',
+            messages: messages,
+            temperature: 0.7,
+        }),
+        timeout: 10000,
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading();
+        if (data.error) {
+            if (gameState.history.length === 0) {
+                alert('Error: ' + data.error.message);
+                reloadApp();
+            } else {
+                optionsDiv.style.display = 'block';
+                alert('Error: ' + data.error.message);
+            }
+            return;
+        }
+        const content = data.choices[0].message.content;
+        processResponse(content, endStory);
+        
+        if (endStory) {
+            saveStory();
+        }
+    })
+    .catch(error => {
+        hideLoading();
         if (gameState.history.length === 0) {
-            alert('Error: ' + data.error.message);
+            alert('An error occurred. Please try again.');
             reloadApp();
         } else {
             optionsDiv.style.display = 'block';
-            alert('Error: ' + data.error.message);
+            alert('An error occurred. Please try again.');
         }
-        return;
-    }
-    const content = data.choices[0].message.content;
-    processResponse(content, endStory);
-    
-    if (endStory) {
-        saveStory();
-    }
-})
-.catch(error => {
-    hideLoading();
-    if (gameState.history.length === 0) {
-        alert('An error occurred. Please try again.');
-        reloadApp();
-    } else {
-        optionsDiv.style.display = 'block';
-        alert('An error occurred. Please try again.');
-    }
-});
+    });
 }
 
 function processResponse(content, endStory) {
@@ -323,7 +348,7 @@ submitButton.onclick = () => {
         scrollRightBtn.style.display = 'none';    
         gameState.history.push(input);
         gameState.lastIcon = '';
-        sendRequestToOpenAI(input);
+        sendRequestToAIService(input);
         userInput.value = '';
     }
 };
@@ -344,13 +369,13 @@ document.getElementById('custom-scenario-button').addEventListener('click', () =
         optionsDiv.innerHTML = '';
         optionsDiv.style.display = 'none';
         gameState.history = [];
-        sendRequestToOpenAI(customSeed, false);
+        sendRequestToAIService(customSeed, false);
     }
 });
 
 endStoryButton.onclick = () => {
     if (confirm('Are you sure you want to end the story?')) {
-        sendRequestToOpenAI('End the story', true, 'wb_twilight');
+        sendRequestToAIService('End the story', true, 'wb_twilight');
     }
 };
 
@@ -373,16 +398,9 @@ startButtons.forEach(button => {
         optionsDiv.innerHTML = '';
         optionsDiv.style.display = 'none';
         gameState.history = [];
-        sendRequestToOpenAI('', false, gameState.lastIcon);
+        sendRequestToAIService('', false, gameState.lastIcon);
     });
 });
-
-// Settings Modal
-const settingsIcon = document.getElementById('settings-icon');
-const settingsModal = document.getElementById('settings-modal');
-const closeModal = document.querySelector('.close');
-const saveSettingsButton = document.getElementById('save-settings-button');
-const apiKeyInput = document.getElementById('api-key-input');
 
 settingsIcon.onclick = function() {
     settingsModal.style.display = 'block';     
@@ -404,13 +422,21 @@ window.onclick = function(event) {
     }
 }
 
+document.getElementById('ai-service-select').addEventListener('change', function() {
+    aiService = this.value;
+    updateSettingsModal();
+});
+
 saveSettingsButton.onclick = function() {
-    const apiKey = apiKeyInput.value.trim();
+    const aiService = document.getElementById('ai-service-select').value || 'openai';
+    const openaiKey = document.getElementById('openai-key-input').value.trim();
+    const azureEndpoint = document.getElementById('azure-endpoint-input').value.trim();
+    const azureKey = document.getElementById('azure-key-input').value.trim();
     const ttsEnabled = document.getElementById('tts-checkbox').checked;
     const ttsVoice = document.getElementById('voice-select').value;
     const writingStyleInput = document.getElementById('writing-style-input').value.trim() || '';
 
-    saveSettings({ apiKey, ttsEnabled, ttsVoice, writingStyle: writingStyleInput});
+    saveSettings({ aiService, openaiKey, azureEndpoint, azureKey, ttsEnabled, ttsVoice, writingStyle: writingStyleInput });
     settingsModal.style.display = 'none';
 }
 
@@ -463,7 +489,7 @@ function saveStory() {
     fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
-            'Authorization': 'Bearer ' + apiKey,
+            'Authorization': 'Bearer ' + openaiKey,
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({

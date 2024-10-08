@@ -1,6 +1,6 @@
 # Infinite IF | Interactive Fiction App Powered by AI
 
-Infinite IF is an interactive fiction app powered by AI, offering endless storytelling possibilities. Dive into unique adventures or create your own, all driven by advanced language models. Create a=your story now at https://nothans.com/if.
+Infinite IF is an interactive fiction app powered by AI, offering endless storytelling possibilities. Dive into unique adventures or create your own, all driven by advanced language models. Create your story now at [NotHans.com/if](https://nothans.com/if).
 
 ![Infinite IF Start Screen](/screenshots/if-start-screen.png)
 
@@ -12,7 +12,8 @@ Infinite IF is an interactive fiction app powered by AI, offering endless storyt
 - Interactive choices throughout the story
 - Text-to-speech functionality for immersive storytelling
 - Customizable writing style
-- Save and manage your stories
+- Save and manage your stories locally
+- OpenAI and Azure OpenAI support
 
 ## Usage
 
@@ -25,10 +26,15 @@ Infinite IF is an interactive fiction app powered by AI, offering endless storyt
 
 Access the settings menu to:
 
-- Update your OpenAI API key
-- Toggle text-to-speech functionality
+- Select your AI Service Provider (OpenAI or Azure OpenAI are currently supported)
+- Enter API Key for your AI Service Provider
+- Enter Azure Endpoint URL and Key if using Azure OpenAI
+- Toggle text-to-speech functionality if using OpenAI
 - Choose a TTS voice
 - Set a custom writing style
+
+### Azure OpenAI
+Use the Completions endpoint URL for the Azure OpenAI Endpoint (e.g. `https://{endpoint}/openai/deployments/{deployment-id}/completions?api-version=2024-06-01`)
 
 ### Writing Style
 
