@@ -603,6 +603,8 @@ nav #settings-icon:hover {
 @media (min-width: 768px) {
     #game-container {
         flex-direction: column;
+        max-width: 800px;
+        margin: 0 auto;
     }
 
     #story {
@@ -613,6 +615,8 @@ nav #settings-icon:hover {
     #start-buttons {
         grid-template-columns: repeat(3, 1fr);
         gap: var(--spacing-sm);
+        max-width: 800px;
+        margin: 0 auto var(--spacing-lg);
     }
 
     #start-buttons button {
@@ -622,6 +626,19 @@ nav #settings-icon:hover {
 
     #start-buttons button span.material-symbols-outlined {
         font-size: 1.5em;
+    }
+
+    #options-and-input {
+        max-width: 800px;
+        margin: 0 auto;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+}
+
+@media (min-width: 1200px) {
+    #game-container, #start-buttons, #options-and-input {
+        max-width: 1000px;
     }
 }
 
