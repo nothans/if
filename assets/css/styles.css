@@ -472,7 +472,7 @@ nav #settings-icon:hover {
     color: var(--text-color);
 }
 
-.settings-group #openai-key-input, #azure-key-input {
+.settings-group #openai-key-input, #azure-key-input, #openrouter-key-input {
     width: 50%;
 }
 

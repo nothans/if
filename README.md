@@ -33,8 +33,25 @@ Access the settings menu to:
 - Choose a TTS voice
 - Set a custom writing style
 
+### OpenAI
+OpenAI requires an OpenAI API Key. If OpenAI is selected as the AI Service Provider, you can also enable TTS and choose a voice.
+
 ### Azure OpenAI
-Use the Completions endpoint URL for the Azure OpenAI Endpoint (e.g. `https://{endpoint}/openai/deployments/{deployment-id}/completions?api-version=2024-06-01`)
+Azure OpenAI support requires the full Completions endpoint from your account (e.g., `https://{endpoint}/openai/deployments/{deployment-id}/completions?api-version=2024-06-01`)
+
+### OpenRouter
+OpenRounter requires an OpenRouter Model ID for the OpenRouter Chat Completions Endpoint. Find the model ID by going to [openrouter.ai](https://openrouter.ai) and clicking on the model you want to use. Here are some known good models:
+
+- `openai/gpt-4o`
+- `openai/gpt-4o-mini`
+- `openai/gpt-4-turbo`
+- `anthropic/claude-3.5-sonnet`
+- `anthropic/claude-3.5-sonnet:beta`
+- `meta-llama/llama-3.1-70b-instruct`
+- `mistralai/mistral-tiny`
+- `mistralai/mistral-small`
+- `mistralai/mistral-large`
+- `nousresearch/hermes-3-llama-3.1-405b:free`
 
 ### Writing Style
 
@@ -51,6 +68,7 @@ You can can customize the writing style. Here are some examples:
 - **Scary**: Write like it's a scary story.
 - **Romantic**: Write like it's a romantic story.
 - **Adventurous**: Write like it's an adventurous story.
+- **German**: Write in German.
 
 ## Story Example
 

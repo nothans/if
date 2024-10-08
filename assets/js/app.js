@@ -1,8 +1,10 @@
 // Settings Management
 let aiService = 'openai';
+let openaiKey = '';
 let azureEndpoint = '';
 let azureKey = '';
-let openaiKey = '';
+let openrouterKey = '';
+let openrouterModel = '';
 let ttsEnabled = false;
 let ttsVoice = 'onyx';
 let writingStyle = '';
@@ -15,6 +17,8 @@ function loadSettings() {
     openaiKey = settings.openaiKey || '';
     azureEndpoint = settings.azureEndpoint || '';
     azureKey = settings.azureKey || '';
+    openrouterKey = settings.openrouterKey || '';
+    openrouterModel = settings.openrouterModel || 'openai/gpt-4o';
     ttsEnabled = settings.ttsEnabled || false;
     writingStyle = settings.writingStyle || '';
     ttsVoice = settings.ttsVoice || 'onyx';
@@ -23,6 +27,8 @@ function loadSettings() {
     document.getElementById('openai-key-input').value = openaiKey;
     document.getElementById('azure-endpoint-input').value = azureEndpoint;
     document.getElementById('azure-key-input').value = azureKey;
+    document.getElementById('openrouter-key-input').value = openrouterKey;
+    document.getElementById('openrouter-model-input').value = openrouterModel;
     document.getElementById('tts-checkbox').checked = ttsEnabled;
     document.getElementById('voice-select').value = ttsVoice;
     document.getElementById('writing-style-input').value = writingStyle;
@@ -31,11 +37,25 @@ function loadSettings() {
 }
 
 function updateSettingsModal() {
-    const isOpenAI = aiService === 'openai';
-    document.getElementById('openai-key-group').style.display = isOpenAI ? 'block' : 'none';
-    document.getElementById('azure-settings-group').style.display = isOpenAI ? 'none' : 'block';
-    document.getElementById('tts-group').style.display = isOpenAI ? 'block' : 'none';
-    document.getElementById('voice-selection-group').style.display = isOpenAI && ttsEnabled ? 'block' : 'none';
+    if (aiService === 'openai') {
+        document.getElementById('openai-settings-group').style.display = 'block';
+        document.getElementById('azure-settings-group').style.display = 'none';
+        document.getElementById('tts-group').style.display = 'block';
+        document.getElementById('voice-selection-group').style.display = 'block';
+        document.getElementById('openrouter-settings-group').style.display = 'none';
+    } else if (aiService === 'azure') {
+        document.getElementById('openai-settings-group').style.display = 'none';
+        document.getElementById('azure-settings-group').style.display = 'block';
+        document.getElementById('tts-group').style.display = 'none';
+        document.getElementById('voice-selection-group').style.display = 'none';
+        document.getElementById('openrouter-settings-group').style.display = 'none';
+    } else if (aiService === 'openrouter') {
+        document.getElementById('openai-settings-group').style.display = 'none';
+        document.getElementById('azure-settings-group').style.display = 'none';
+        document.getElementById('tts-group').style.display = 'none';
+        document.getElementById('voice-selection-group').style.display = 'none';
+        document.getElementById('openrouter-settings-group').style.display = 'block';
+    }
 }
 
 function saveSettings(settings) {
@@ -73,7 +93,7 @@ let gameState = {
 // Initialize Settings on Startup
 loadSettings();
 
-if (!openaiKey || !azureKey) {
+if (!openaiKey && !azureKey && !openrouterKey) {
     settingsModal.style.display = 'block';
 }
 
@@ -211,6 +231,7 @@ function sendRequestToAIService(userChoice, endStory = false, userIcon = '') {
             content: `You are an interactive fiction game engine. Avoid repeating parts of the story. Incorporate the user action into the story segment. ${writingStyleInstruction} Generate engaging descriptions and navigation options in JSON format only. Do not include any additional text outside the JSON. The JSON format should be:
 
     {
+    "storyTitle": "...",
     "description": "...",
     "icon": "material-icon-name",
     "options": [
@@ -221,7 +242,7 @@ function sendRequestToAIService(userChoice, endStory = false, userIcon = '') {
     "location": "..."
     }
 
-    Provide an appropriate Material Symbol name for the description and for each option that matches the content. Use valid Material Symbols names like "forest", "rocket_launch", "emoji_nature", etc.`,
+    Provide a story title for the entire story, a description for this story segment, and an appropriate Material Symbol name for the description and for each option that matches the content. Use valid Material Symbols names like "forest", "rocket_launch", "emoji_nature", etc.`,
         },
     ];
 
@@ -237,7 +258,7 @@ function sendRequestToAIService(userChoice, endStory = false, userIcon = '') {
         content: content,
     });
 
-    let endpoint, headers;
+    let endpoint, headers, model;
 
     if (aiService === 'openai') {
         endpoint = 'https://api.openai.com/v1/chat/completions';
@@ -245,19 +266,34 @@ function sendRequestToAIService(userChoice, endStory = false, userIcon = '') {
             'Authorization': 'Bearer ' + openaiKey,
             'Content-Type': 'application/json',
         };
-    } else {
+        model = 'gpt-4o';
+    } else if (aiService === 'openrouter') {
+        endpoint = 'https://openrouter.ai/api/v1/chat/completions';
+        headers = {
+            'Authorization': 'Bearer ' + openrouterKey,
+            'Content-Type': 'application/json',
+            "HTTP-Referer": `https://nothans.com/if`,
+            "X-Title": `Infinite IF | Interactive Fiction by Chimeric AI`,
+        };
+        model = openrouterModel || 'openai/gpt-4o';
+    } else if (aiService === 'azure') {
         endpoint = azureEndpoint;
         headers = {
             'api-key': azureKey,
             'Content-Type': 'application/json',
         };
+        model = 'gpt-4o';
+    }
+    else {
+        alert('No AI service selected');
+        return;
     }
 
     fetch(endpoint, {
         method: 'POST',
         headers: headers,
         body: JSON.stringify({
-            model: 'gpt-4o',
+            model: model,
             messages: messages,
             temperature: 0.7,
         }),
@@ -278,10 +314,6 @@ function sendRequestToAIService(userChoice, endStory = false, userIcon = '') {
         }
         const content = data.choices[0].message.content;
         processResponse(content, endStory);
-        
-        if (endStory) {
-            saveStory();
-        }
     })
     .catch(error => {
         hideLoading();
@@ -300,12 +332,26 @@ function processResponse(content, endStory) {
         content = content.replace(/^(`{2,3}json)?/, '').replace(/`{3}$/, '').trim();
         const response = JSON.parse(content);
         let iconToUse = validateIcon(response.icon);
+        let storyTitle = response.storyTitle || gameState.seedIdea;
         storyInProgress = true;
         
         if (response.description) {
             appendStory(response.description, iconToUse);
         }
         if (endStory) {
+
+            const story = {
+                title: storyTitle,
+                date: new Date().toISOString(),
+                content: gameState.storyContent,
+                seedIdea: gameState.seedIdea,
+                writingStyle: writingStyle
+            };
+            
+            let savedStories = JSON.parse(localStorage.getItem('infinite-if-stories')) || [];
+            savedStories.push(story);
+            localStorage.setItem('infinite-if-stories', JSON.stringify(savedStories));
+
             storyInProgress = false;
             optionsDiv.innerHTML = '';
             optionsDiv.style.display = 'none';
@@ -334,6 +380,15 @@ function processResponse(content, endStory) {
 }
 
 // Event Listeners
+
+// Close Modals
+document.querySelectorAll('.close').forEach(closeButton => {
+    closeButton.onclick = function() {
+        this.closest('.modal').style.display = 'none';
+    }
+});
+
+// User Input
 userInput.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {
         submitButton.click();
@@ -353,34 +408,17 @@ submitButton.onclick = () => {
     }
 };
 
-// Start Buttons
-document.getElementById('custom-scenario-button').addEventListener('click', () => {
-    const customSeed = prompt('Enter your custom adventure seed:');
-    if (customSeed) {
-        gameState.seedIdea = customSeed;
-        gameState.location = customSeed;
-        gameState.lastIcon = 'edit';
-        startScreen.style.display = 'none';
-        gameContainer.style.display = 'flex';
-        inputArea.style.display = 'flex';
-        endStoryButton.style.display = 'inline-block';
-        restartButton.style.display = 'none';
-        storyDiv.innerHTML = '';
-        optionsDiv.innerHTML = '';
-        optionsDiv.style.display = 'none';
-        gameState.history = [];
-        sendRequestToAIService(customSeed, false);
-    }
-});
-
+// End Story Button
 endStoryButton.onclick = () => {
     if (confirm('Are you sure you want to end the story?')) {
         sendRequestToAIService('End the story', true, 'wb_twilight');
     }
 };
 
+// Restart Button
 restartButton.addEventListener('click', reloadApp);
 
+// Start Buttons
 startButtons.forEach(button => {
     button.addEventListener('click', () => {
         if (button.getAttribute('id') === 'custom-scenario-button') {
@@ -400,6 +438,26 @@ startButtons.forEach(button => {
         gameState.history = [];
         sendRequestToAIService('', false, gameState.lastIcon);
     });
+});
+
+// Custom Scenario Button
+document.getElementById('custom-scenario-button').addEventListener('click', () => {
+    const customSeed = prompt('Enter your custom adventure seed:');
+    if (customSeed) {
+        gameState.seedIdea = customSeed;
+        gameState.location = customSeed;
+        gameState.lastIcon = 'edit';
+        startScreen.style.display = 'none';
+        gameContainer.style.display = 'flex';
+        inputArea.style.display = 'flex';
+        endStoryButton.style.display = 'inline-block';
+        restartButton.style.display = 'none';
+        storyDiv.innerHTML = '';
+        optionsDiv.innerHTML = '';
+        optionsDiv.style.display = 'none';
+        gameState.history = [];
+        sendRequestToAIService(customSeed, false);
+    }
 });
 
 settingsIcon.onclick = function() {
@@ -422,32 +480,6 @@ window.onclick = function(event) {
     }
 }
 
-document.getElementById('ai-service-select').addEventListener('change', function() {
-    aiService = this.value;
-    updateSettingsModal();
-});
-
-saveSettingsButton.onclick = function() {
-    const aiService = document.getElementById('ai-service-select').value || 'openai';
-    const openaiKey = document.getElementById('openai-key-input').value.trim();
-    const azureEndpoint = document.getElementById('azure-endpoint-input').value.trim();
-    const azureKey = document.getElementById('azure-key-input').value.trim();
-    const ttsEnabled = document.getElementById('tts-checkbox').checked;
-    const ttsVoice = document.getElementById('voice-select').value;
-    const writingStyleInput = document.getElementById('writing-style-input').value.trim() || '';
-
-    saveSettings({ aiService, openaiKey, azureEndpoint, azureKey, ttsEnabled, ttsVoice, writingStyle: writingStyleInput });
-    settingsModal.style.display = 'none';
-}
-
-document.getElementById('tts-checkbox').addEventListener('change', function() {
-    if (this.checked) {
-        document.getElementById('voice-selection-group').style.display = 'block';
-    } else {
-        document.getElementById('voice-selection-group').style.display = 'none';
-    }
-});
-
 // Reloading the App
 const reloadIcon = document.getElementById('reload-icon');
 reloadIcon.addEventListener('click', reloadApp);
@@ -469,67 +501,34 @@ function reloadApp(event) {
     }
 }
 
-// Saving Stories
-function saveStory() {
-    showLoading();
+// Settings
+document.getElementById('ai-service-select').addEventListener('change', function() {
+    aiService = this.value;
+    updateSettingsModal();
+});
 
-    const storyContent = gameState.storyContent.map(segment => segment.text).join('\n');
+saveSettingsButton.onclick = function() {
+    const aiService = document.getElementById('ai-service-select').value || 'openai';
+    const openaiKey = document.getElementById('openai-key-input').value.trim();
+    const azureEndpoint = document.getElementById('azure-endpoint-input').value.trim();
+    const azureKey = document.getElementById('azure-key-input').value.trim();
+    const openrouterKey = document.getElementById('openrouter-key-input').value.trim();
+    const openrouterModel = document.getElementById('openrouter-model-input').value.trim() || 'openai/gpt-4o';
+    const ttsEnabled = document.getElementById('tts-checkbox').checked;
+    const ttsVoice = document.getElementById('voice-select').value;
+    const writingStyleInput = document.getElementById('writing-style-input').value.trim() || '';
 
-    const messages = [
-        {
-            role: 'system',
-            content: 'You are a creative title generator. Based on the story provided, create a short, engaging title that captures the essence of the story.'
-        },
-        {
-            role: 'user',
-            content: `Generate a short title for this story:\n\n${storyContent}`
-        }
-    ];
-
-    fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-            'Authorization': 'Bearer ' + openaiKey,
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            model: 'gpt-4o',
-            messages: messages,
-            temperature: 0.7,
-        }),
-        timeout: 10000,
-    })
-    .then(response => response.json())
-    .then(data => {
-        hideLoading();
-
-        let generatedTitle = '';
-        if (data.error) {
-            generatedTitle = gameState.seedIdea;
-        } else {
-            generatedTitle = data.choices[0].message.content.trim();
-        }
-
-        generatedTitle = generatedTitle.replace(/^['"]+|['"]+$/g, '');
-
-        const story = {
-            title: generatedTitle,
-            date: new Date().toISOString(),
-            content: gameState.storyContent,
-            seedIdea: gameState.seedIdea,
-            writingStyle: writingStyle
-        };
-        
-        let savedStories = JSON.parse(localStorage.getItem('infinite-if-stories')) || [];
-        savedStories.push(story);
-        localStorage.setItem('infinite-if-stories', JSON.stringify(savedStories));
-    })
-    .catch(error => {
-        hideLoading();
-        console.error('Error:', error);
-        alert('An error occurred while saving the story. Please try again.');
-    });
+    saveSettings({ aiService, openaiKey, azureEndpoint, azureKey, openrouterKey, openrouterModel, ttsEnabled, ttsVoice, writingStyle: writingStyleInput });    
+    settingsModal.style.display = 'none';
 }
+
+document.getElementById('tts-checkbox').addEventListener('change', function() {
+    if (this.checked) {
+        document.getElementById('voice-selection-group').style.display = 'block';
+    } else {
+        document.getElementById('voice-selection-group').style.display = 'none';
+    }
+});
 
 // Saved Stories Management
 const savedStoriesIcon = document.getElementById('saved-stories-icon');
@@ -626,19 +625,11 @@ function viewStory(index) {
     storyViewModal.style.display = 'block';
 }
 
-// Close Modals
-document.querySelectorAll('.close').forEach(closeButton => {
-    closeButton.onclick = function() {
-        this.closest('.modal').style.display = 'none';
-    }
-});
-
 // Scroll Arrow Functionality
 const scrollLeftBtn = document.getElementById('scroll-left');
 const scrollRightBtn = document.getElementById('scroll-right');
 const optionsContainer = document.getElementById('options');
-
-const scrollAmount = 150; // Adjust scroll distance as needed
+const scrollAmount = 150;
 
 scrollLeftBtn.addEventListener('click', () => {
     optionsContainer.scrollBy({

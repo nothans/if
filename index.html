@@ -8,7 +8,7 @@
     <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/styles.css?v=1.0.1">
+    <link rel="stylesheet" href="assets/css/styles.css?v=1.0.2">
 </head>
 <body>
     <nav>
@@ -106,11 +106,18 @@
                 <select id="ai-service-select">
                     <option value="openai">OpenAI</option>
                     <option value="azure">Azure OpenAI</option>
+                    <option value="openrouter">OpenRouter</option>
                 </select>
             </div>
-            <div class="settings-group" id="openai-key-group">
+            <div class="settings-group" id="openai-settings-group">
                 <label for="openai-key-input">OpenAI API Key:</label>
                 <input type="text" id="openai-key-input" placeholder="Enter your OpenAI API Key">
+            </div>
+            <div class="settings-group" id="openrouter-settings-group" style="display: none;">
+                <label for="openrouter-key-input">OpenRouter API Key:</label>
+                <input type="text" id="openrouter-key-input" placeholder="Enter your OpenRouter API Key">
+                <label for="openrouter-model-input">OpenRouter Model:</label>
+                <input type="text" id="openrouter-model-input" placeholder="Enter the OpenRouter Model">
             </div>
             <div class="settings-group" id="azure-settings-group" style="display: none;">
                 <label for="azure-endpoint-input">Azure OpenAI Endpoint URL:</label>
@@ -157,8 +164,8 @@
         </div>
     </div>
 
-    <script src="assets/js/icons.js?v=1.0.1"></script>
-    <script src="assets/js/app.js?v=1.0.1"></script>
+    <script src="assets/js/icons.js?v=1.0.2"></script>
+    <script src="assets/js/app.js?v=1.0.2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/timeago.js/4.0.2/timeago.min.js"></script>
 </body>
 </html>
