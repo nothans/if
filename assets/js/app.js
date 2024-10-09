@@ -41,7 +41,11 @@ function updateSettingsModal() {
         document.getElementById('openai-settings-group').style.display = 'block';
         document.getElementById('azure-settings-group').style.display = 'none';
         document.getElementById('tts-group').style.display = 'block';
-        document.getElementById('voice-selection-group').style.display = 'block';
+        if (ttsEnabled) {
+            document.getElementById('voice-selection-group').style.display = 'block';
+        } else {
+            document.getElementById('voice-selection-group').style.display = 'none';
+        }
         document.getElementById('openrouter-settings-group').style.display = 'none';
     } else if (aiService === 'azure') {
         document.getElementById('openai-settings-group').style.display = 'none';
