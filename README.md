@@ -73,3 +73,29 @@ You can can customize the writing style. Here are some examples:
 ## Story Example
 
 ![Banana Splitter Story| Infinite IF](/screenshots/if-banana-splitter-story.png)
+
+## Custom Story Prompts
+Select the 'Create Your Own Adventure' option from the start screen. You will see a text box to enter your story prompt. You can use this to generate a story based on your idea.
+
+Here are some ideas for custom story prompts:
+
+- **Mystic Library Quest**: "Explore an infinite library where each book transports you to different realities. Choose wisely; not all stories have happy endings."
+- **Lost in Time**: "As a time traveler stranded in the past, make choices that could either return you home or alter history irreversibly."
+- **Enchanted Forest Journey**: "Venture through a magical forest where every path you take affects the fate of mythical creatures and the balance of nature."
+- **Cyberpunk City Heist**: "Plan a heist in a futuristic city controlled by AI overlords. Your decisions could free the populace or tighten the regime's grip."
+- **Haunted Mansion Mystery**: "Investigate a mansion where each room holds secrets and dangers. Unravel the mystery, but beware—some truths are best left hidden."
+- **Space Colony Survival**: "Lead a group of settlers on a distant planet. Resources are scarce, and your choices determine the colony's survival."
+- **Undersea Expedition**: "Dive into the depths of an unexplored ocean trench. Discover hidden wonders or awaken ancient terrors."
+- **Rebel of the Realm**: "In a kingdom ruled by a tyrant, join the rebellion. Your alliances and actions could either liberate the land or doom it."
+- **Alien Diplomacy**: "As Earth's ambassador, negotiate with an alien race. Peace or interstellar war hinges on your decisions."
+- **Dreamscape Explorer**: "Navigate through people's dreams to solve a looming threat. Each mind is a new world with its own rules and risks."
+- **Wizard's Apprentice Trials**: "Master spells and face trials in a magic academy. Success brings power; failure has dire consequences."
+- **Post-Apocalyptic Quest**: "Survive in a world ravaged by disaster. Choices about trust and resources shape humanity's future."
+- **Virtual Reality Trap**: "Trapped in a VR game gone wrong, find the exit before the system collapses. Not all glitches are your friends."
+- **Detective Noir**: "Solve a series of crimes in a city where nothing is as it seems. Each clue uncovers more danger."
+- **Mythical Beast Rider**: "Bond with a legendary creature and defend your realm. Your decisions affect the harmony between humans and beasts."
+- **Corporate Espionage**: "Infiltrate a mega-corporation to expose their secrets. One wrong move could cost you everything."
+- **Cursed Artifact Hunt**: "Search for artifacts that grant wishes but carry curses. Weigh the risks of each desire you fulfill."
+- **Steampunk Airship Adventure**: "Captain an airship through skies filled with pirates and monsters. Chart your course carefully."
+- **Genetic Engineering Dilemmas**: "Manipulate DNA to cure diseases or enhance humans. Ethical choices lead to different societal outcomes."
+- **Kingdom Builder**: "Found a new kingdom in untamed lands. Decisions on laws and alliances shape your legacy."
