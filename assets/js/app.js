@@ -333,15 +333,53 @@ function sendRequestToAIService(userChoice, endStory = false, userIcon = '') {
 
 function processResponse(content, endStory) {
     try {
-        content = content.replace(/^(`{2,3}json)?/, '').replace(/`{3}$/, '').trim();
-        const response = JSON.parse(content);
+        let response = content;
+
+        if (typeof content === 'string') {
+            content = content.replace(/^(`{2,3}json)?/, '').replace(/`{3}$/, '').trim();
+            response = JSON.parse(content);
+        } else if (content.choices && content.choices[0] && content.choices[0].message) {
+            response = JSON.parse(content.choices[0].message.content);
+        } else if (typeof content === 'object') {
+            response = content;
+        }
+        else {
+            if (gameState.history.length === 0) {
+                storyInProgress = false;
+                alert('An error occurred. Please try again.');
+                reloadApp();
+                return;
+            }
+            else {
+                scrollLeftBtn.style.display = 'block';
+                scrollRightBtn.style.display = 'block';
+                optionsDiv.style.display = 'block';
+                alert('An error occurred. Please try again.');
+                return;
+            }
+        }
+
         let iconToUse = validateIcon(response.icon);
         let storyTitle = response.storyTitle || gameState.seedIdea;
         storyInProgress = true;
         
-        if (response.description) {
+        if (typeof response.description === 'object' && response.description.text) {
+            appendStory(response.description.text, validateIcon(response.description.icon));
+            if (response.description.location) {
+                gameState.location = response.description.location;
+            }
+        } else {
             appendStory(response.description, iconToUse);
+            if (response.location) {
+                gameState.location = response.location;
+            }
         }
+
+        let options = response.options || (response.description && response.description.options);
+        if (options && options.length > 0) {
+            displayOptions(options);
+        }
+        
         if (endStory) {
 
             const story = {
@@ -366,18 +404,14 @@ function processResponse(content, endStory) {
             restartButton.style.display = 'block';
             return;
         }
-        if (response.location) {
-            gameState.location = response.location;
-        }
-        if (response.options && response.options.length > 0) {
-            displayOptions(response.options);
-        }
     } catch (e) {
         if (gameState.history.length === 0) {
             storyInProgress = false;
             alert('An error occurred. Please try again.');
             reloadApp();
         }
+        scrollLeftBtn.style.display = 'block';
+        scrollRightBtn.style.display = 'block';
         optionsDiv.style.display = 'block';
         alert('An error occurred. Please try again.');
     }

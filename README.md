@@ -48,6 +48,7 @@ OpenRounter requires an OpenRouter Model ID for the OpenRouter Chat Completions 
 - `anthropic/claude-3.5-sonnet`
 - `anthropic/claude-3.5-sonnet:beta`
 - `meta-llama/llama-3.1-70b-instruct`
+- `meta-llama/llama-3.2-3b-instruct:free`
 - `mistralai/mistral-tiny`
 - `mistralai/mistral-small`
 - `mistralai/mistral-large`
