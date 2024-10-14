@@ -1,6 +1,6 @@
 # Infinite IF | Interactive Fiction App Powered by AI
 
-Infinite IF is an interactive fiction app powered by AI, offering endless storytelling possibilities. Dive into unique adventures or create your own, all driven by advanced language models. Create your story now at [NotHans.com/if](https://nothans.com/if).
+Infinite IF is an interactive fiction app powered by AI, offering endless storytelling possibilities. Dive into unique adventures or create your own, all driven by advanced language models. Create your story now at [if.NotHans.com/](https://if.nothans.com/).
 
 ![Infinite IF Start Screen](/screenshots/if-start-screen.png)
 
