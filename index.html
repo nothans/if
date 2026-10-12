@@ -117,7 +117,20 @@
                 <label for="openrouter-key-input">OpenRouter API Key:</label>
                 <input type="text" id="openrouter-key-input" placeholder="Enter your OpenRouter API Key">
                 <label for="openrouter-model-input">OpenRouter Model:</label>
-                <input type="text" id="openrouter-model-input" placeholder="Enter the OpenRouter Model">
+                <input type="text" id="openrouter-model-input" list="openrouter-models" placeholder="Pick or enter an OpenRouter model ID">
+                <datalist id="openrouter-models">
+                    <option value="anthropic/claude-sonnet-5.5">
+                    <option value="anthropic/claude-haiku-5.5">
+                    <option value="openai/gpt-6.1-sol">
+                    <option value="openai/gpt-6-luna">
+                    <option value="google/gemini-3.8-flash">
+                    <option value="x-ai/grok-4.7">
+                    <option value="deepseek/deepseek-v4.1-flash">
+                    <option value="qwen/qwen3.8-flash">
+                    <option value="moonshotai/kimi-k3">
+                    <option value="mistralai/mistral-large-4-0">
+                    <option value="z-ai/glm-5.3">
+                </datalist>
             </div>
             <div class="settings-group" id="azure-settings-group" style="display: none;">
                 <label for="azure-endpoint-input">Azure OpenAI Endpoint URL:</label>

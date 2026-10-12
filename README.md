@@ -13,7 +13,7 @@ Infinite IF is an interactive fiction app powered by AI, offering endless storyt
 - Text-to-speech functionality for immersive storytelling
 - Customizable writing style
 - Save and manage your stories locally
-- OpenAI and Azure OpenAI support
+- OpenAI, Azure OpenAI, and OpenRouter support
 
 ## Usage
 
@@ -26,7 +26,7 @@ Infinite IF is an interactive fiction app powered by AI, offering endless storyt
 
 Access the settings menu to:
 
-- Select your AI Service Provider (OpenAI or Azure OpenAI are currently supported)
+- Select your AI Service Provider (OpenAI, Azure OpenAI, or OpenRouter)
 - Enter API Key for your AI Service Provider
 - Enter Azure Endpoint URL and Key if using Azure OpenAI
 - Toggle text-to-speech functionality if using OpenAI
@@ -40,19 +40,19 @@ OpenAI requires an OpenAI API Key. If OpenAI is selected as the AI Service Provi
 Azure OpenAI support requires the full Completions endpoint from your account (e.g., `https://{endpoint}/openai/deployments/{deployment-id}/completions?api-version=2024-06-01`)
 
 ### OpenRouter
-OpenRounter requires an OpenRouter Model ID for the OpenRouter Chat Completions Endpoint. Find the model ID by going to [openrouter.ai](https://openrouter.ai) and clicking on the model you want to use. Here are some known good models:
+OpenRouter requires an OpenRouter Model ID for the OpenRouter Chat Completions Endpoint. Find the model ID by going to [openrouter.ai](https://openrouter.ai) and clicking on the model you want to use. Here are some known good models (tested October 2026):
 
-- `openai/gpt-4o`
-- `openai/gpt-4o-mini`
-- `openai/gpt-4-turbo`
-- `anthropic/claude-3.5-sonnet`
-- `anthropic/claude-3.5-sonnet:beta`
-- `meta-llama/llama-3.1-70b-instruct`
-- `meta-llama/llama-3.2-3b-instruct:free`
-- `mistralai/mistral-tiny`
-- `mistralai/mistral-small`
-- `mistralai/mistral-large`
-- `nousresearch/hermes-3-llama-3.1-405b:free`
+- `anthropic/claude-sonnet-5.5`
+- `anthropic/claude-haiku-5.5`
+- `openai/gpt-6.1-sol`
+- `openai/gpt-6-luna`
+- `google/gemini-3.8-flash`
+- `x-ai/grok-4.7`
+- `deepseek/deepseek-v4.1-flash`
+- `qwen/qwen3.8-flash`
+- `moonshotai/kimi-k3`
+- `mistralai/mistral-large-4-0`
+- `z-ai/glm-5.3`
 
 ### Writing Style
 
