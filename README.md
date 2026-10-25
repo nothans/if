@@ -8,12 +8,14 @@ Infinite IF is an interactive fiction app powered by AI, offering endless storyt
 
 - Multiple pre-defined story seeds to start your adventure
 - Custom scenario option for personalized storytelling
-- AI-powered narrative generation using OpenAI's GPT-4o LLM
+- AI-powered narrative generation with current models from OpenAI, Anthropic (Claude), and hundreds more via OpenRouter
+- Structured JSON outputs for reliable story turns, with a fallback for models that don't support them
+- Pick any model per provider, or load the provider's live model list from settings
 - Interactive choices throughout the story
 - Text-to-speech functionality for immersive storytelling
 - Customizable writing style
 - Save and manage your stories locally
-- OpenAI, Azure OpenAI, and OpenRouter support
+- OpenAI, Anthropic, Azure OpenAI, and OpenRouter support
 
 ## Usage
 
@@ -26,21 +28,30 @@ Infinite IF is an interactive fiction app powered by AI, offering endless storyt
 
 Access the settings menu to:
 
-- Select your AI Service Provider (OpenAI, Azure OpenAI, or OpenRouter)
+- Select your AI Service Provider (OpenAI, Anthropic, Azure OpenAI, or OpenRouter)
 - Enter API Key for your AI Service Provider
-- Enter Azure Endpoint URL and Key if using Azure OpenAI
+- Pick a model (each provider remembers its own), or click **Load available models** to fetch the provider's current list
+- Enter Azure Endpoint URL, Key, and deployment name if using Azure OpenAI
 - Toggle text-to-speech functionality if using OpenAI
 - Choose a TTS voice
 - Set a custom writing style
 
+API keys are stored only in your browser's local storage and are sent directly to the provider you choose.
+
 ### OpenAI
-OpenAI requires an OpenAI API Key. If OpenAI is selected as the AI Service Provider, you can also enable TTS and choose a voice.
+OpenAI requires an OpenAI API Key. The default model is `gpt-6.1-sol`. If OpenAI is selected as the AI Service Provider, you can also enable TTS (`gpt-4o-mini-tts`) and choose a voice.
+
+### Anthropic
+Anthropic requires an Anthropic API Key from [platform.claude.com](https://platform.claude.com). The default model is `claude-opus-5-5`; `claude-sonnet-5-5` and `claude-haiku-5-5` are faster, cheaper alternatives. Requests go straight from your browser to the Claude API.
 
 ### Azure OpenAI
-Azure OpenAI support requires the full Completions endpoint from your account (e.g., `https://{endpoint}/openai/deployments/{deployment-id}/completions?api-version=2024-06-01`)
+Azure OpenAI accepts either endpoint style:
+
+- The v1 endpoint, e.g. `https://{resource}.openai.azure.com/openai/v1/chat/completions`. Enter your deployment name in the model field.
+- A deployment endpoint, e.g. `https://{resource}.openai.azure.com/openai/deployments/{deployment-id}/chat/completions?api-version=2024-10-21`. The model field can be left blank.
 
 ### OpenRouter
-OpenRouter requires an OpenRouter Model ID for the OpenRouter Chat Completions Endpoint. Find the model ID by going to [openrouter.ai](https://openrouter.ai) and clicking on the model you want to use. Here are some known good models (tested October 2026):
+OpenRouter requires an OpenRouter API Key. The default model is `anthropic/claude-sonnet-5.5`. Use **Load available models** to browse every OpenRouter model, or find a model ID at [openrouter.ai](https://openrouter.ai). Here are some known good models (tested October 2026):
 
 - `anthropic/claude-sonnet-5.5`
 - `anthropic/claude-haiku-5.5`

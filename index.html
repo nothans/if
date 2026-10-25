@@ -8,7 +8,7 @@
     <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/styles.css?v=1.0.5">
+    <link rel="stylesheet" href="assets/css/styles.css?v=1.1.0">
 </head>
 <body>
     <nav>
@@ -68,7 +68,7 @@
             <span class="material-symbols-outlined footer-icons">hotel_class</span>
             <span>Surprises are possible.</span>
             <span class="material-symbols-outlined footer-icons">view_list</span>
-            <span>v1.0.5</span>
+            <span>v1.1.0</span>
             <span class="material-symbols-outlined footer-icons">developer_mode</span>
             <a href="https://nothans.com/ai" target="_blank">NotHans</a>
         </p>
@@ -105,6 +105,7 @@
                 <label for="ai-service-select">AI Service Provider:</label>
                 <select id="ai-service-select">
                     <option value="openai">OpenAI</option>
+                    <option value="anthropic">Anthropic (Claude)</option>
                     <option value="azure">Azure OpenAI</option>
                     <option value="openrouter">OpenRouter</option>
                 </select>
@@ -113,30 +114,26 @@
                 <label for="openai-key-input">OpenAI API Key:</label>
                 <input type="text" id="openai-key-input" placeholder="Enter your OpenAI API Key">
             </div>
+            <div class="settings-group" id="anthropic-settings-group" style="display: none;">
+                <label for="anthropic-key-input">Anthropic API Key:</label>
+                <input type="text" id="anthropic-key-input" placeholder="Enter your Anthropic API Key">
+            </div>
             <div class="settings-group" id="openrouter-settings-group" style="display: none;">
                 <label for="openrouter-key-input">OpenRouter API Key:</label>
                 <input type="text" id="openrouter-key-input" placeholder="Enter your OpenRouter API Key">
-                <label for="openrouter-model-input">OpenRouter Model:</label>
-                <input type="text" id="openrouter-model-input" list="openrouter-models" placeholder="Pick or enter an OpenRouter model ID">
-                <datalist id="openrouter-models">
-                    <option value="anthropic/claude-sonnet-5.5">
-                    <option value="anthropic/claude-haiku-5.5">
-                    <option value="openai/gpt-6.1-sol">
-                    <option value="openai/gpt-6-luna">
-                    <option value="google/gemini-3.8-flash">
-                    <option value="x-ai/grok-4.7">
-                    <option value="deepseek/deepseek-v4.1-flash">
-                    <option value="qwen/qwen3.8-flash">
-                    <option value="moonshotai/kimi-k3">
-                    <option value="mistralai/mistral-large-4-0">
-                    <option value="z-ai/glm-5.3">
-                </datalist>
             </div>
             <div class="settings-group" id="azure-settings-group" style="display: none;">
                 <label for="azure-endpoint-input">Azure OpenAI Endpoint URL:</label>
                 <input type="text" id="azure-endpoint-input" placeholder="Enter your Azure OpenAI Endpoint URL">
                 <label for="azure-key-input">Azure OpenAI Key:</label>
                 <input type="text" id="azure-key-input" placeholder="Enter your Azure OpenAI Key">
+            </div>
+            <div class="settings-group" id="model-settings-group">
+                <label for="model-input" id="model-label">Model:</label>
+                <input type="text" id="model-input" list="model-options" placeholder="Pick or enter a model ID">
+                <datalist id="model-options"></datalist>
+                <button type="button" id="refresh-models-button">Load available models</button>
+                <span id="model-list-status"></span>
             </div>
             <div class="settings-group" id="tts-group">
                 <label for="tts-checkbox">Enable Text-to-Speech:</label>
@@ -146,11 +143,16 @@
                 <label for="voice-select">Select Voice:</label>
                 <select id="voice-select">
                     <option value="alloy">Alloy</option>
+                    <option value="ash">Ash</option>
+                    <option value="ballad">Ballad</option>
+                    <option value="coral">Coral</option>
                     <option value="echo">Echo</option>
                     <option value="fable">Fable</option>
-                    <option value="onyx" selected>Onyx</option>
                     <option value="nova">Nova</option>
+                    <option value="onyx" selected>Onyx</option>
+                    <option value="sage">Sage</option>
                     <option value="shimmer">Shimmer</option>
+                    <option value="verse">Verse</option>
                 </select>
             </div>
             <div class="settings-group">
@@ -177,8 +179,8 @@
         </div>
     </div>
 
-    <script src="assets/js/icons.js?v=1.0.5"></script>
-    <script src="assets/js/app.js?v=1.0.5"></script>
+    <script src="assets/js/icons.js?v=1.1.0"></script>
+    <script src="assets/js/app.js?v=1.1.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/timeago.js/4.0.2/timeago.min.js"></script>
 </body>
 </html>

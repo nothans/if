@@ -1,34 +1,98 @@
+// AI Providers
+// Default and suggested models per provider. Suggestions populate the model picker;
+// "Load available models" in settings replaces them with the provider's live list.
+const PROVIDERS = {
+    openai: {
+        defaultModel: 'gpt-6.1-sol',
+        suggestedModels: ['gpt-6.1-sol', 'gpt-6-luna'],
+        modelLabel: 'OpenAI Model:',
+    },
+    anthropic: {
+        defaultModel: 'claude-opus-5-5',
+        suggestedModels: ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-haiku-5-5', 'claude-fable-5-1'],
+        modelLabel: 'Claude Model:',
+    },
+    openrouter: {
+        defaultModel: 'anthropic/claude-sonnet-5.5',
+        suggestedModels: [
+            'anthropic/claude-sonnet-5.5',
+            'anthropic/claude-haiku-5.5',
+            'openai/gpt-6.1-sol',
+            'openai/gpt-6-luna',
+            'google/gemini-3.8-flash',
+            'x-ai/grok-4.7',
+            'deepseek/deepseek-v4.1-flash',
+            'qwen/qwen3.8-flash',
+            'moonshotai/kimi-k3',
+            'mistralai/mistral-large-4-0',
+            'z-ai/glm-5.3',
+        ],
+        modelLabel: 'OpenRouter Model:',
+    },
+    azure: {
+        defaultModel: '',
+        suggestedModels: [],
+        modelLabel: 'Azure Deployment Name (required for /openai/v1/ endpoints):',
+    },
+};
+
+// Models that were hardcoded defaults in v1.0.x; saved settings holding these are upgraded.
+const LEGACY_DEFAULT_MODELS = ['gpt-4o', 'openai/gpt-4o'];
+
+const ANTHROPIC_API_VERSION = '2026-10-21';
+// Claude models that accept server-side refusal fallbacks (fallbacks: "default").
+const ANTHROPIC_FALLBACK_MODELS = ['claude-fable-5-1', 'claude-opus-5-5', 'claude-opus-5', 'claude-sonnet-5-5'];
+// Claude models that accept output_config.effort.
+const ANTHROPIC_EFFORT_MODEL_PATTERN = /^claude-(fable|mythos|opus|sonnet|haiku)-5|^claude-opus-4-[5-8]|^claude-sonnet-4-6/;
+
+const TTS_MODEL = 'gpt-4o-mini-tts';
+const REQUEST_TIMEOUT_MS = 180000;
+
 // Settings Management
 let aiService = 'openai';
 let openaiKey = '';
+let anthropicKey = '';
 let azureEndpoint = '';
 let azureKey = '';
 let openrouterKey = '';
-let openrouterModel = '';
+let models = {};
+let draftModels = {};
 let ttsEnabled = false;
 let ttsVoice = 'onyx';
 let writingStyle = '';
 let storyInProgress = false;
 
+function resolveModels(settings) {
+    const saved = settings.models || { openrouter: settings.openrouterModel };
+    const resolved = {};
+    Object.keys(PROVIDERS).forEach(provider => {
+        const model = (saved[provider] || '').trim();
+        resolved[provider] = model && !LEGACY_DEFAULT_MODELS.includes(model) ? model : PROVIDERS[provider].defaultModel;
+    });
+    return resolved;
+}
+
 function loadSettings() {
     const settings = JSON.parse(localStorage.getItem('infinite-if-settings')) || {};
 
-    aiService = settings.aiService || 'openai';
+    aiService = PROVIDERS[settings.aiService] ? settings.aiService : 'openai';
     openaiKey = settings.openaiKey || '';
+    anthropicKey = settings.anthropicKey || '';
     azureEndpoint = settings.azureEndpoint || '';
     azureKey = settings.azureKey || '';
     openrouterKey = settings.openrouterKey || '';
-    openrouterModel = settings.openrouterModel || 'openai/gpt-4o';
+    models = resolveModels(settings);
+    draftModels = { ...models };
     ttsEnabled = settings.ttsEnabled || false;
     writingStyle = settings.writingStyle || '';
     ttsVoice = settings.ttsVoice || 'onyx';
 
     document.getElementById('ai-service-select').value = aiService;
     document.getElementById('openai-key-input').value = openaiKey;
+    document.getElementById('anthropic-key-input').value = anthropicKey;
     document.getElementById('azure-endpoint-input').value = azureEndpoint;
     document.getElementById('azure-key-input').value = azureKey;
     document.getElementById('openrouter-key-input').value = openrouterKey;
-    document.getElementById('openrouter-model-input').value = openrouterModel;
     document.getElementById('tts-checkbox').checked = ttsEnabled;
     document.getElementById('voice-select').value = ttsVoice;
     document.getElementById('writing-style-input').value = writingStyle;
@@ -37,29 +101,36 @@ function loadSettings() {
 }
 
 function updateSettingsModal() {
-    if (aiService === 'openai') {
-        document.getElementById('openai-settings-group').style.display = 'block';
-        document.getElementById('azure-settings-group').style.display = 'none';
-        document.getElementById('tts-group').style.display = 'block';
-        if (ttsEnabled) {
-            document.getElementById('voice-selection-group').style.display = 'block';
-        } else {
-            document.getElementById('voice-selection-group').style.display = 'none';
-        }
-        document.getElementById('openrouter-settings-group').style.display = 'none';
-    } else if (aiService === 'azure') {
-        document.getElementById('openai-settings-group').style.display = 'none';
-        document.getElementById('azure-settings-group').style.display = 'block';
-        document.getElementById('tts-group').style.display = 'none';
-        document.getElementById('voice-selection-group').style.display = 'none';
-        document.getElementById('openrouter-settings-group').style.display = 'none';
-    } else if (aiService === 'openrouter') {
-        document.getElementById('openai-settings-group').style.display = 'none';
-        document.getElementById('azure-settings-group').style.display = 'none';
-        document.getElementById('tts-group').style.display = 'none';
-        document.getElementById('voice-selection-group').style.display = 'none';
-        document.getElementById('openrouter-settings-group').style.display = 'block';
-    }
+    const show = (id, visible) => {
+        document.getElementById(id).style.display = visible ? 'block' : 'none';
+    };
+    show('openai-settings-group', aiService === 'openai');
+    show('anthropic-settings-group', aiService === 'anthropic');
+    show('azure-settings-group', aiService === 'azure');
+    show('openrouter-settings-group', aiService === 'openrouter');
+    show('tts-group', aiService === 'openai');
+    show('voice-selection-group', aiService === 'openai' && document.getElementById('tts-checkbox').checked);
+    updateModelPicker();
+}
+
+function updateModelPicker() {
+    const provider = PROVIDERS[aiService];
+    document.getElementById('model-label').textContent = provider.modelLabel;
+    document.getElementById('model-input').value = draftModels[aiService] || '';
+    document.getElementById('model-input').placeholder = provider.defaultModel || 'Enter a model or deployment name';
+    document.getElementById('refresh-models-button').style.display = aiService === 'azure' ? 'none' : 'inline-block';
+    document.getElementById('model-list-status').textContent = '';
+    setModelOptions(provider.suggestedModels);
+}
+
+function setModelOptions(modelIds) {
+    const datalist = document.getElementById('model-options');
+    datalist.innerHTML = '';
+    modelIds.forEach(id => {
+        const option = document.createElement('option');
+        option.value = id;
+        datalist.appendChild(option);
+    });
 }
 
 function saveSettings(settings) {
@@ -92,12 +163,14 @@ let gameState = {
     seedIdea: '',
     lastIcon: '',
     storyContent: [],
+    // Conversation transcript sent to the model: alternating user prompts and assistant JSON replies.
+    messages: [],
 };
 
 // Initialize Settings on Startup
 loadSettings();
 
-if (!openaiKey && !azureKey && !openrouterKey) {
+if (!openaiKey && !anthropicKey && !azureKey && !openrouterKey) {
     settingsModal.style.display = 'block';
 }
 
@@ -113,7 +186,7 @@ function appendStory(text, iconClass) {
     segment.innerHTML = `<span class="material-symbols-outlined">${iconClass}</span><div>${text}</div>`;
     storyDiv.appendChild(segment);
     storyDiv.scrollTop = storyDiv.scrollHeight;
-    convertTextToSpeech(text);            
+    convertTextToSpeech(text);
     gameState.storyContent.push({ text, iconClass });
 }
 
@@ -127,35 +200,27 @@ function convertTextToSpeech(text) {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            model: 'tts-1',
+            model: TTS_MODEL,
             input: text,
             voice: ttsVoice,
-            stream: true
+            instructions: `Narrate like an engaging audiobook reader of interactive fiction. ${writingStyle ? `Match this writing style: ${writingStyle}` : ''}`.trim(),
+            response_format: 'mp3',
         }),
     })
     .then(response => {
+        if (!response.ok) {
+            throw new Error(`Text-to-speech request failed with status ${response.status}`);
+        }
+        return response.blob();
+    })
+    .then(audioBlob => {
         if (window.currentAudio) {
             window.currentAudio.pause();
             window.currentAudio = null;
         }
-
-        const reader = response.body.getReader();
-        const audioChunks = [];
-
-        function processStream({ done, value }) {
-            if (done) {
-                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                const audioUrl = URL.createObjectURL(audioBlob);
-                const audio = new Audio(audioUrl);
-                window.currentAudio = audio;
-                audio.play();
-                return;
-            }
-            audioChunks.push(value);
-            reader.read().then(processStream);
-        }
-
-        reader.read().then(processStream);
+        const audio = new Audio(URL.createObjectURL(audioBlob));
+        window.currentAudio = audio;
+        audio.play();
     })
     .catch(error => {
         console.error('Error with text-to-speech:', error);
@@ -167,7 +232,7 @@ function displayOptions(options) {
     optionsDiv.innerHTML = '';
     optionsDiv.style.display = 'block';
     scrollLeftBtn.style.display = 'block';
-    scrollRightBtn.style.display = 'block';    
+    scrollRightBtn.style.display = 'block';
     options.forEach((option) => {
         const btn = document.createElement('button');
         const iconClass = validateIcon(option.icon || 'help_outline');
@@ -179,11 +244,18 @@ function displayOptions(options) {
     });
 }
 
+function showOptionsAgain() {
+    if (optionsDiv.children.length === 0) return;
+    optionsDiv.style.display = 'block';
+    scrollLeftBtn.style.display = 'block';
+    scrollRightBtn.style.display = 'block';
+}
+
 // Handle Option Selection
 function handleOptionSelection(optionText, optionIcon) {
     optionsDiv.style.display = 'none';
     scrollLeftBtn.style.display = 'none';
-    scrollRightBtn.style.display = 'none';    
+    scrollRightBtn.style.display = 'none';
     gameState.history.push(optionText);
     gameState.lastIcon = optionIcon || 'help_outline';
     sendRequestToAIService(optionText, false, optionIcon);
@@ -204,216 +276,302 @@ function hideLoading() {
     userInput.disabled = false;
 }
 
-// AI Service Interaction
-function sendRequestToAIService(userChoice, endStory = false, userIcon = '') {
-    showLoading();
+// Story Response Format
+// Sent as a JSON schema so providers with structured outputs return valid JSON every time.
+const STORY_SCHEMA = {
+    type: 'object',
+    properties: {
+        storyTitle: { type: 'string', description: 'A title for the entire story.' },
+        description: { type: 'string', description: 'The narrative for this story segment.' },
+        icon: { type: 'string', description: 'A Material Symbols icon name for this segment.' },
+        options: {
+            type: 'array',
+            description: 'Choices the player can take next. Empty when the story has ended.',
+            items: {
+                type: 'object',
+                properties: {
+                    text: { type: 'string' },
+                    icon: { type: 'string', description: 'A Material Symbols icon name for this option.' },
+                },
+                required: ['text', 'icon'],
+                additionalProperties: false,
+            },
+        },
+        location: { type: 'string', description: "The player's current location." },
+    },
+    required: ['storyTitle', 'description', 'icon', 'options', 'location'],
+    additionalProperties: false,
+};
 
-    let writingStyleInstruction = '';
-    if (writingStyle) {
-        writingStyleInstruction = `Writing style: ${writingStyle}`;
+function buildSystemPrompt() {
+    const writingStyleInstruction = writingStyle ? `\n\nWriting style: ${writingStyle}` : '';
+    return `You are the narrator and game engine for an interactive fiction game. Each turn, write the next story segment and offer the player a handful of distinct choices. Build on everything that has happened so far, weave the player's latest action into the segment, and avoid repeating earlier passages.${writingStyleInstruction}
+
+Respond with a single JSON object and nothing else, in this shape:
+
+{
+  "storyTitle": "A title for the entire story",
+  "description": "The story segment",
+  "icon": "material_symbol_name",
+  "options": [
+    {"text": "A choice", "icon": "material_symbol_name"}
+  ],
+  "location": "Where the player is now"
+}
+
+For every icon, use a valid Material Symbols name that fits the content, such as "forest", "rocket_launch", or "emoji_nature".`;
+}
+
+function buildUserPrompt(userChoice, endStory, userIcon) {
+    if (endStory) {
+        let prompt = 'Write an epic conclusion to the story so far. Wrap up all loose ends and give a satisfying ending. Return an empty options array.';
+        if (userIcon) {
+            prompt += ` Use the icon "${userIcon}" for the conclusion.`;
+        }
+        return prompt;
+    }
+    if (gameState.storyContent.length === 0) {
+        let prompt = `Begin a story based on the seed idea: "${gameState.seedIdea}".`;
+        if (userIcon) {
+            prompt += ` Use the icon "${userIcon}" for the opening segment.`;
+        }
+        return prompt;
+    }
+    let prompt = `The player is at "${gameState.location}". They chose to "${userChoice}".`;
+    prompt += userIcon ? ` Use the icon "${userIcon}" for this segment.` : ' Pick a fitting icon for this segment.';
+    return prompt + ' What happens next?';
+}
+
+// Provider Requests
+async function postJSON(url, headers, body) {
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...headers },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || data.error) {
+        const error = new Error((data.error && data.error.message) || `Request failed with status ${response.status}`);
+        error.status = response.status;
+        throw error;
+    }
+    return data;
+}
+
+// Structured outputs are not supported by every model. If a request with a schema is
+// rejected as invalid, retry once without it and rely on the prompt's JSON instructions.
+async function withSchemaFallback(request) {
+    try {
+        return await request(true);
+    } catch (error) {
+        if (error.status === 400) {
+            return await request(false);
+        }
+        throw error;
+    }
+}
+
+function getChatCompletionsConfig() {
+    if (aiService === 'openai') {
+        return {
+            endpoint: 'https://api.openai.com/v1/chat/completions',
+            headers: { 'Authorization': 'Bearer ' + openaiKey },
+            model: models.openai,
+        };
+    }
+    if (aiService === 'openrouter') {
+        return {
+            endpoint: 'https://openrouter.ai/api/v1/chat/completions',
+            headers: {
+                'Authorization': 'Bearer ' + openrouterKey,
+                'HTTP-Referer': 'https://nothans.com/if',
+                'X-Title': 'Infinite IF | Interactive Fiction App Powered by AI',
+            },
+            model: models.openrouter,
+        };
+    }
+    if (aiService === 'azure') {
+        return {
+            endpoint: azureEndpoint,
+            headers: { 'api-key': azureKey },
+            model: models.azure,
+        };
+    }
+    return null;
+}
+
+async function requestChatCompletion(config, systemPrompt, messages) {
+    const data = await withSchemaFallback(useSchema => {
+        const body = {
+            messages: [{ role: 'system', content: systemPrompt }, ...messages],
+        };
+        if (config.model) {
+            body.model = config.model;
+        }
+        if (useSchema) {
+            body.response_format = {
+                type: 'json_schema',
+                json_schema: { name: 'story_segment', strict: true, schema: STORY_SCHEMA },
+            };
+        }
+        return postJSON(config.endpoint, config.headers, body);
+    });
+    const message = data.choices && data.choices[0] && data.choices[0].message;
+    if (!message) {
+        throw new Error('The AI service returned an empty response.');
+    }
+    if (message.refusal) {
+        throw new Error(`The model declined to continue: ${message.refusal}`);
+    }
+    return message.content;
+}
+
+async function requestAnthropicMessage(systemPrompt, messages) {
+    const model = models.anthropic;
+    const headers = {
+        'x-api-key': anthropicKey,
+        'anthropic-version': ANTHROPIC_API_VERSION,
+        'anthropic-dangerous-direct-browser-access': 'true',
+    };
+    const supportsFallbacks = ANTHROPIC_FALLBACK_MODELS.includes(model);
+    if (supportsFallbacks) {
+        headers['anthropic-beta'] = 'server-side-fallback-2026-07-01';
     }
 
-    let content;
-    if (gameState.history.length === 0) {
-        content = `Begin a story based on the seed idea: "${gameState.seedIdea}". Use the icon "${userIcon}" for the initial description.`;
+    const data = await withSchemaFallback(useSchema => {
+        const body = {
+            model: model,
+            max_tokens: 16000,
+            system: systemPrompt,
+            messages: messages,
+        };
+        const outputConfig = {};
+        if (ANTHROPIC_EFFORT_MODEL_PATTERN.test(model)) {
+            // Low effort keeps turns snappy for an interactive game.
+            outputConfig.effort = 'low';
+        }
+        if (useSchema) {
+            outputConfig.format = { type: 'json_schema', schema: STORY_SCHEMA };
+        }
+        if (Object.keys(outputConfig).length > 0) {
+            body.output_config = outputConfig;
+        }
+        if (supportsFallbacks) {
+            body.fallbacks = 'default';
+        }
+        return postJSON('https://api.anthropic.com/v1/messages', headers, body);
+    });
+
+    if (data.stop_reason === 'refusal') {
+        throw new Error('The model declined to continue this story. Try a different choice.');
+    }
+    return (data.content || [])
+        .filter(block => block.type === 'text')
+        .map(block => block.text)
+        .join('');
+}
+
+function parseStoryJSON(text) {
+    let cleaned = (text || '').trim().replace(/^```(?:json)?\s*/i, '').replace(/```$/, '').trim();
+    try {
+        return JSON.parse(cleaned);
+    } catch (e) {
+        // Some models wrap the JSON in prose; fall back to the outermost object.
+        const start = cleaned.indexOf('{');
+        const end = cleaned.lastIndexOf('}');
+        if (start !== -1 && end > start) {
+            return JSON.parse(cleaned.slice(start, end + 1));
+        }
+        throw e;
+    }
+}
+
+// AI Service Interaction
+async function sendRequestToAIService(userChoice, endStory = false, userIcon = '') {
+    showLoading();
+
+    const systemPrompt = buildSystemPrompt();
+    const userMessage = { role: 'user', content: buildUserPrompt(userChoice, endStory, userIcon) };
+    const messages = [...gameState.messages, userMessage];
+
+    try {
+        let content;
+        if (aiService === 'anthropic') {
+            content = await requestAnthropicMessage(systemPrompt, messages);
+        } else {
+            const config = getChatCompletionsConfig();
+            if (!config) {
+                throw new Error('No AI service selected.');
+            }
+            content = await requestChatCompletion(config, systemPrompt, messages);
+        }
+        const response = parseStoryJSON(content);
+        gameState.messages.push(userMessage, { role: 'assistant', content: JSON.stringify(response) });
+        hideLoading();
+        processResponse(response, endStory);
+    } catch (error) {
+        console.error('AI service error:', error);
+        hideLoading();
+        handleRequestError(error, endStory);
+    }
+}
+
+function handleRequestError(error, endStory) {
+    let message = error && error.message ? error.message : 'An error occurred.';
+    if (error && error.name === 'TimeoutError') {
+        message = 'The AI service took too long to respond.';
+    } else if (error instanceof SyntaxError) {
+        message = 'The AI service returned a response that could not be read.';
+    }
+    alert(`${message} Please try again.`);
+
+    if (gameState.storyContent.length === 0) {
+        storyInProgress = false;
+        reloadApp();
+        return;
+    }
+    if (!endStory) {
+        // Drop the choice that failed so it is not counted twice on retry.
+        gameState.history.pop();
+    }
+    showOptionsAgain();
+}
+
+function processResponse(response, endStory) {
+    const storyTitle = response.storyTitle || gameState.seedIdea;
+    storyInProgress = true;
+
+    appendStory(response.description || '', validateIcon(response.icon));
+    if (response.location) {
+        gameState.location = response.location;
+    }
+
+    if (Array.isArray(response.options) && response.options.length > 0 && !endStory) {
+        displayOptions(response.options);
     }
 
     if (endStory) {
-        content = `Provide an epic conclusion to the story so far, based on the player's history: ${gameState.history.join(' -> ')}. Seed idea: "${gameState.seedIdea}". Wrap up all loose ends and provide a satisfying ending.`;
-        if (userIcon) {
-            content += ` Use the icon "${userIcon}" for the epic conclusion.`;
-        }
-    } else if (userIcon) {
-        content = `The player is at "${gameState.location}". They chose to "${userChoice}" with icon "${userIcon}". Continue the story using this icon. Seed idea: "${gameState.seedIdea}"`;
-    } else {
-        content = `The player is at "${gameState.location}". They chose to "${userChoice}". Recommend an icon for this choice. What happens next? Seed idea: "${gameState.seedIdea}"`;
-    }
-
-    const messages = [
-        {
-            role: 'system',
-            content: `You are an interactive fiction game engine. Avoid repeating parts of the story. Incorporate the user action into the story segment. ${writingStyleInstruction} Generate engaging descriptions and navigation options in JSON format only. Do not include any additional text outside the JSON. The JSON format should be:
-
-    {
-    "storyTitle": "...",
-    "description": "...",
-    "icon": "material-icon-name",
-    "options": [
-    {"text": "option1", "icon": "material-icon1"},
-    {"text": "option2", "icon": "material-icon2"},
-    ...
-    ],
-    "location": "..."
-    }
-
-    Provide a story title for the entire story, a description for this story segment, and an appropriate Material Symbol name for the description and for each option that matches the content. Use valid Material Symbols names like "forest", "rocket_launch", "emoji_nature", etc.`,
-        },
-    ];
-
-    gameState.storyContent.forEach((segment, index) => {
-        messages.push({
-            role: 'assistant',
-            content: `Description: ${segment.text}\nIcon: ${segment.iconClass}\nPrevious Option: ${gameState.history[index-1] || 'None'}\nSeed Idea: ${gameState.seedIdea}`
-        });
-    });
-
-    messages.push({
-        role: 'user',
-        content: content,
-    });
-
-    let endpoint, headers, model;
-
-    if (aiService === 'openai') {
-        endpoint = 'https://api.openai.com/v1/chat/completions';
-        headers = {
-            'Authorization': 'Bearer ' + openaiKey,
-            'Content-Type': 'application/json',
+        const story = {
+            title: storyTitle,
+            date: new Date().toISOString(),
+            content: gameState.storyContent,
+            seedIdea: gameState.seedIdea,
+            writingStyle: writingStyle
         };
-        model = 'gpt-4o';
-    } else if (aiService === 'openrouter') {
-        endpoint = 'https://openrouter.ai/api/v1/chat/completions';
-        headers = {
-            'Authorization': 'Bearer ' + openrouterKey,
-            'Content-Type': 'application/json',
-            "HTTP-Referer": `https://nothans.com/if`,
-            "X-Title": `Infinite IF | Interactive Fiction App Powered by AI`,
-        };
-        model = openrouterModel || 'openai/gpt-4o';
-    } else if (aiService === 'azure') {
-        endpoint = azureEndpoint;
-        headers = {
-            'api-key': azureKey,
-            'Content-Type': 'application/json',
-        };
-        model = 'gpt-4o';
-    }
-    else {
-        alert('No AI service selected');
-        return;
-    }
 
-    fetch(endpoint, {
-        method: 'POST',
-        headers: headers,
-        body: JSON.stringify({
-            model: model,
-            messages: messages,
-            temperature: 0.7,
-        }),
-        timeout: 10000,
-    })
-    .then(response => response.json())
-    .then(data => {
-        hideLoading();
-        if (data.error) {
-            if (gameState.history.length === 0) {
-                alert('Error: ' + data.error.message);
-                reloadApp();
-            } else {
-                optionsDiv.style.display = 'block';
-                alert('Error: ' + data.error.message);
-            }
-            return;
-        }
-        const content = data.choices[0].message.content;
-        processResponse(content, endStory);
-    })
-    .catch(error => {
-        hideLoading();
-        if (gameState.history.length === 0) {
-            alert('An error occurred. Please try again.');
-            reloadApp();
-        } else {
-            optionsDiv.style.display = 'block';
-            alert('An error occurred. Please try again.');
-        }
-    });
-}
+        let savedStories = JSON.parse(localStorage.getItem('infinite-if-stories')) || [];
+        savedStories.push(story);
+        localStorage.setItem('infinite-if-stories', JSON.stringify(savedStories));
 
-function processResponse(content, endStory) {
-    try {
-        let response = content;
-
-        if (typeof content === 'string') {
-            content = content.replace(/^(`{2,3}json)?/, '').replace(/`{3}$/, '').trim();
-            response = JSON.parse(content);
-        } else if (content.choices && content.choices[0] && content.choices[0].message) {
-            response = JSON.parse(content.choices[0].message.content);
-        } else if (typeof content === 'object') {
-            response = content;
-        }
-        else {
-            if (gameState.history.length === 0) {
-                storyInProgress = false;
-                alert('An error occurred. Please try again.');
-                reloadApp();
-                return;
-            }
-            else {
-                scrollLeftBtn.style.display = 'block';
-                scrollRightBtn.style.display = 'block';
-                optionsDiv.style.display = 'block';
-                alert('An error occurred. Please try again.');
-                return;
-            }
-        }
-
-        let iconToUse = validateIcon(response.icon);
-        let storyTitle = response.storyTitle || gameState.seedIdea;
-        storyInProgress = true;
-        
-        if (typeof response.description === 'object' && response.description.text) {
-            appendStory(response.description.text, validateIcon(response.description.icon));
-            if (response.description.location) {
-                gameState.location = response.description.location;
-            }
-        } else {
-            appendStory(response.description, iconToUse);
-            if (response.location) {
-                gameState.location = response.location;
-            }
-        }
-
-        let options = response.options || (response.description && response.description.options);
-        if (options && options.length > 0) {
-            displayOptions(options);
-        }
-        
-        if (endStory) {
-
-            const story = {
-                title: storyTitle,
-                date: new Date().toISOString(),
-                content: gameState.storyContent,
-                seedIdea: gameState.seedIdea,
-                writingStyle: writingStyle
-            };
-            
-            let savedStories = JSON.parse(localStorage.getItem('infinite-if-stories')) || [];
-            savedStories.push(story);
-            localStorage.setItem('infinite-if-stories', JSON.stringify(savedStories));
-
-            storyInProgress = false;
-            optionsDiv.innerHTML = '';
-            optionsDiv.style.display = 'none';
-            scrollLeftBtn.style.display = 'none';
-            scrollRightBtn.style.display = 'none';
-            inputArea.style.display = 'none';
-            endStoryButton.style.display = 'none';
-            restartButton.style.display = 'block';
-            return;
-        }
-    } catch (e) {
-        if (gameState.history.length === 0) {
-            storyInProgress = false;
-            alert('An error occurred. Please try again.');
-            reloadApp();
-        }
-        scrollLeftBtn.style.display = 'block';
-        scrollRightBtn.style.display = 'block';
-        optionsDiv.style.display = 'block';
-        alert('An error occurred. Please try again.');
+        storyInProgress = false;
+        optionsDiv.innerHTML = '';
+        optionsDiv.style.display = 'none';
+        scrollLeftBtn.style.display = 'none';
+        scrollRightBtn.style.display = 'none';
+        inputArea.style.display = 'none';
+        endStoryButton.style.display = 'none';
+        restartButton.style.display = 'block';
     }
 }
 
@@ -474,6 +632,8 @@ startButtons.forEach(button => {
         optionsDiv.innerHTML = '';
         optionsDiv.style.display = 'none';
         gameState.history = [];
+        gameState.storyContent = [];
+        gameState.messages = [];
         sendRequestToAIService('', false, gameState.lastIcon);
     });
 });
@@ -494,6 +654,8 @@ document.getElementById('custom-scenario-button').addEventListener('click', () =
         optionsDiv.innerHTML = '';
         optionsDiv.style.display = 'none';
         gameState.history = [];
+        gameState.storyContent = [];
+        gameState.messages = [];
         sendRequestToAIService(customSeed, false);
     }
 });
@@ -545,18 +707,89 @@ document.getElementById('ai-service-select').addEventListener('change', function
     updateSettingsModal();
 });
 
+document.getElementById('model-input').addEventListener('input', function() {
+    draftModels[aiService] = this.value;
+});
+
+// Fetch the provider's live model list so newly released models show up without an app update.
+async function fetchAvailableModels(provider) {
+    const getJSON = async (url, headers) => {
+        const response = await fetch(url, { headers, signal: AbortSignal.timeout(30000) });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error((data.error && data.error.message) || `Request failed with status ${response.status}`);
+        }
+        return data;
+    };
+
+    if (provider === 'openai') {
+        const key = document.getElementById('openai-key-input').value.trim();
+        const data = await getJSON('https://api.openai.com/v1/models', { 'Authorization': 'Bearer ' + key });
+        const nonChat = /audio|realtime|tts|transcribe|whisper|image|dall-e|embedding|moderation|search|instruct|babbage|davinci/;
+        return data.data
+            .map(model => model.id)
+            .filter(id => /^(gpt-|o\d|chatgpt-)/.test(id) && !nonChat.test(id))
+            .sort()
+            .reverse();
+    }
+    if (provider === 'anthropic') {
+        const key = document.getElementById('anthropic-key-input').value.trim();
+        const data = await getJSON('https://api.anthropic.com/v1/models?limit=1000', {
+            'x-api-key': key,
+            'anthropic-version': ANTHROPIC_API_VERSION,
+            'anthropic-dangerous-direct-browser-access': 'true',
+        });
+        // Returned newest first.
+        return data.data.map(model => model.id);
+    }
+    if (provider === 'openrouter') {
+        const data = await getJSON('https://openrouter.ai/api/v1/models', {});
+        return data.data
+            .filter(model => !model.architecture || !model.architecture.output_modalities || model.architecture.output_modalities.includes('text'))
+            .map(model => model.id)
+            .sort();
+    }
+    return [];
+}
+
+document.getElementById('refresh-models-button').addEventListener('click', async function() {
+    const provider = aiService;
+    const status = document.getElementById('model-list-status');
+    status.textContent = 'Loading models...';
+    this.disabled = true;
+    try {
+        const modelIds = await fetchAvailableModels(provider);
+        if (provider !== aiService) return;
+        setModelOptions(modelIds);
+        status.textContent = `${modelIds.length} models available. Clear the field to browse them.`;
+    } catch (error) {
+        console.error('Error loading models:', error);
+        if (provider === aiService) {
+            status.textContent = `Could not load models: ${error.message}`;
+        }
+    } finally {
+        this.disabled = false;
+    }
+});
+
 saveSettingsButton.onclick = function() {
     const aiService = document.getElementById('ai-service-select').value || 'openai';
     const openaiKey = document.getElementById('openai-key-input').value.trim();
+    const anthropicKey = document.getElementById('anthropic-key-input').value.trim();
     const azureEndpoint = document.getElementById('azure-endpoint-input').value.trim();
     const azureKey = document.getElementById('azure-key-input').value.trim();
     const openrouterKey = document.getElementById('openrouter-key-input').value.trim();
-    const openrouterModel = document.getElementById('openrouter-model-input').value.trim() || 'openai/gpt-4o';
     const ttsEnabled = document.getElementById('tts-checkbox').checked;
     const ttsVoice = document.getElementById('voice-select').value;
     const writingStyleInput = document.getElementById('writing-style-input').value.trim() || '';
 
-    saveSettings({ aiService, openaiKey, azureEndpoint, azureKey, openrouterKey, openrouterModel, ttsEnabled, ttsVoice, writingStyle: writingStyleInput });    
+    draftModels[aiService] = document.getElementById('model-input').value;
+    const savedModels = {};
+    Object.keys(PROVIDERS).forEach(provider => {
+        savedModels[provider] = (draftModels[provider] || '').trim();
+    });
+
+    saveSettings({ aiService, openaiKey, anthropicKey, azureEndpoint, azureKey, openrouterKey, models: savedModels, ttsEnabled, ttsVoice, writingStyle: writingStyleInput });
     settingsModal.style.display = 'none';
 }
 
