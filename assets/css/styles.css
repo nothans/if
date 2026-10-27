@@ -490,8 +490,32 @@ nav #settings-icon:hover {
     resize: vertical;
 }
 
-.settings-group #openai-key-input, #azure-key-input, #openrouter-key-input {
+.settings-group #openai-key-input, #anthropic-key-input, #azure-key-input, #openrouter-key-input, #model-input {
     width: 200px;
+}
+
+#refresh-models-button {
+    display: inline-block;
+    margin-top: var(--spacing-xs);
+    background: none;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+    padding: 2px var(--spacing-xs);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85em;
+}
+
+#refresh-models-button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+#model-list-status {
+    display: block;
+    margin-top: var(--spacing-xs);
+    font-size: 0.85em;
+    opacity: 0.8;
 }
 
 .settings-group #voice-select, #ai-service-select {
