@@ -2,44 +2,43 @@
 
 Infinite IF is an interactive fiction app powered by AI, offering endless storytelling possibilities. Dive into unique adventures or create your own, all driven by advanced language models. Create your story now at [if.NotHans.com/](https://if.nothans.com/).
 
-![Infinite IF Start Screen](/screenshots/if-start-screen.png)
+![The Infinite IF start screen: the nine places a story can begin, and a field to begin anywhere](/screenshots/if-start-screen.png)
 
 ## Features
 
 - Multiple pre-defined story seeds to start your adventure
 - Custom scenario option for personalized storytelling
-- AI-powered narrative generation with current models from OpenAI, Anthropic (Claude), and hundreds more via OpenRouter
+- AI-powered narrative generation with current models from OpenAI, Anthropic (Claude), and hundreds more via OpenRouter, or a model running on your own computer with Ollama
 - Structured JSON outputs for reliable story turns, with a fallback for models that don't support them
 - Pick any model per provider, or load the provider's live model list from settings
-- Interactive choices throughout the story
-- Text-to-speech functionality for immersive storytelling
+- Reads like a text adventure transcript: each passage under the name of the place, your moves printed between passages
+- Numbered choices you can take with a keypress, or type any move of your own
+- Reads the story aloud with a voice that runs in your browser, OpenAI's voices, or Ollama's
 - Customizable writing style
-- Save and manage your stories locally
-- OpenAI, Anthropic, Azure OpenAI, and OpenRouter support
+- Finished stories go to your library in this browser, to read again as they were played
+- OpenAI, Anthropic, Azure OpenAI, OpenRouter, and Ollama support
 
 ## Usage
 
-1. Choose a pre-defined story seed or create a custom scenario.
-2. Read the generated story segments and make choices to progress.
-3. Type custom actions if desired.
-4. End the story when you're ready or continue exploring.
+1. Pick where the story begins, or type a beginning of your own.
+2. Read the passage, then take a numbered choice (press its number) or type what you do.
+3. Choose **End the story** when you're ready; the model writes an ending and the story goes to your library.
 
 ## Settings
 
 Access the settings menu to:
 
-- Select your AI Service Provider (OpenAI, Anthropic, Azure OpenAI, or OpenRouter)
+- Select your AI Service Provider (OpenAI, Anthropic, Azure OpenAI, OpenRouter, or Ollama)
 - Enter API Key for your AI Service Provider
 - Pick a model (each provider remembers its own), or click **Load available models** to fetch the provider's current list
 - Enter Azure Endpoint URL, Key, and deployment name if using Azure OpenAI
-- Toggle text-to-speech functionality if using OpenAI
-- Choose a TTS voice
+- Choose how the story is read aloud, and the voice
 - Set a custom writing style
 
 API keys are stored only in your browser's local storage and are sent directly to the provider you choose.
 
 ### OpenAI
-OpenAI requires an OpenAI API Key. The default model is `gpt-6.1-sol`. If OpenAI is selected as the AI Service Provider, you can also enable TTS (`gpt-4o-mini-tts`) and choose a voice.
+OpenAI requires an OpenAI API Key. The default model is `gpt-6.1-sol`. The same key powers OpenAI's voices (`gpt-4o-mini-tts`) when you choose OpenAI under **Read the Story Aloud**.
 
 ### Anthropic
 Anthropic requires an Anthropic API Key from [platform.claude.com](https://platform.claude.com). The default model is `claude-opus-5-5`; `claude-sonnet-5-5` and `claude-haiku-5-5` are faster, cheaper alternatives. Requests go straight from your browser to the Claude API.
@@ -65,9 +64,34 @@ OpenRouter requires an OpenRouter API Key. The default model is `anthropic/claud
 - `mistralai/mistral-large-4-0`
 - `z-ai/glm-5.3`
 
+### Ollama
+Ollama runs the story on your own computer, with no API key and nothing sent to a cloud service.
+
+1. Install [Ollama](https://ollama.com) and pull a chat model, for example `ollama pull qwen3.5:9b`.
+2. In Settings, choose **Ollama (local)**. The app lists your models and picks the first one.
+
+Story turns ask the model to skip its thinking step; on an RTX 3060 Ti that keeps a `qwen3.5:9b` turn to a few seconds instead of about 40.
+
+Serving the app from your own computer needs nothing else: run `python -m http.server 8000` in this folder and open http://localhost:8000.
+To use Ollama from if.nothans.com instead:
+
+1. Allow the site in Ollama: set the environment variable `OLLAMA_ORIGINS` to `https://if.nothans.com` and restart Ollama (see [Ollama's FAQ](https://docs.ollama.com/faq) for each operating system).
+2. When your browser asks to let the site access devices on your local network, choose Allow.
+
+## Reading the Story Aloud
+
+Choose a voice under **Read the Story Aloud** in Settings.
+Speech starts while the rest of the segment is still being generated.
+
+- The built-in voice runs Gradium's open [Phonon](https://huggingface.co/gradium/phonon-31m-en) model (Apache 2.0) in your browser, on the graphics card through WebGPU when the browser has it; it downloads a 65 MB model once, needs no account, and offers 37 English voices.
+- OpenAI's voices use `gpt-4o-mini-tts` with your OpenAI API key.
+- Ollama's voice is its `phonon` model, which Ollama runs only on Apple Silicon Macs (`ollama pull phonon`).
+
+The built-in voice's runtime, [phonon-tts](https://www.npmjs.com/package/phonon-tts) 0.4.0 (MIT or Apache 2.0), is in `assets/vendor/phonon-tts/`; its WebAssembly files load from jsDelivr, and the model and voices from Hugging Face.
+
 ### Writing Style
 
-You can can customize the writing style. Here are some examples:
+You can customize the writing style. Here are some examples:
 
 - **Pirate**: Talk like a pirate.
 - **Shakespeare**: Write like Shakespeare.
@@ -84,7 +108,7 @@ You can can customize the writing style. Here are some examples:
 
 ## Story Example
 
-![Banana Splitter Story| Infinite IF](/screenshots/if-banana-splitter-story.png)
+![A story in progress: the title, two passages under their place names, and the move that joined them](/screenshots/if-story.png)
 
 ## Custom Story Prompts
 Select the 'Create Your Own Adventure' option from the start screen. You will see a text box to enter your story prompt. You can use this to generate a story based on your idea.
@@ -95,7 +119,7 @@ Here are some ideas for custom story prompts:
 - **Lost in Time**: "As a time traveler stranded in the past, make choices that could either return you home or alter history irreversibly."
 - **Enchanted Forest Journey**: "Venture through a magical forest where every path you take affects the fate of mythical creatures and the balance of nature."
 - **Cyberpunk City Heist**: "Plan a heist in a futuristic city controlled by AI overlords. Your decisions could free the populace or tighten the regime's grip."
-- **Haunted Mansion Mystery**: "Investigate a mansion where each room holds secrets and dangers. Unravel the mystery, but beware—some truths are best left hidden."
+- **Haunted Mansion Mystery**: "Investigate a mansion where each room holds secrets and dangers. Unravel the mystery, but beware: some truths are best left hidden."
 - **Space Colony Survival**: "Lead a group of settlers on a distant planet. Resources are scarce, and your choices determine the colony's survival."
 - **Undersea Expedition**: "Dive into the depths of an unexplored ocean trench. Discover hidden wonders or awaken ancient terrors."
 - **Rebel of the Realm**: "In a kingdom ruled by a tyrant, join the rebellion. Your alliances and actions could either liberate the land or doom it."

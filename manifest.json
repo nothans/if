@@ -1,7 +1,7 @@
 {
-    "name": "Infinite IF | Interactive Fiction App Powered by AI",
+    "name": "Infinite IF: interactive fiction written as you play",
     "short_name": "Infinite IF",
-    "description": "An engaging interactive fiction app that immerses you in a world of storytelling with choices powered by AI.",
+    "description": "Interactive fiction that a language model writes as you play.",
     "icons": [
       {
         "src": "assets/images/icons/if-icon.svg",
@@ -11,7 +11,7 @@
     ],
     "start_url": "https://if.nothans.com",
     "display": "fullscreen",
-    "theme_color": "#1f3e37",
-    "background_color": "#1f3e37",
+    "theme_color": "#1D2125",
+    "background_color": "#1D2125",
     "orientation": "portrait"
 }

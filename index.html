@@ -1,186 +1,233 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Infinite IF | Interactive Fiction App Powered by AI</title>
-    <meta name="description" content="Infinite IF is an interactive fiction app powered by AI, offering endless storytelling possibilities. Dive into unique adventures or create your own, all driven by advanced language models. Imagined by Hans Scharler and LightFun Games">
+    <meta charset="utf-8">
+    <title>Infinite IF: interactive fiction written as you play</title>
+    <meta name="description" content="Infinite IF is interactive fiction that a language model writes as you play. Pick where the story begins, then read, choose, or type what you do next. Runs on OpenAI, Claude, OpenRouter, Azure, or Ollama on your own computer, and can read the story aloud. Imagined by Hans Scharler and LightFun Games.">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" href="assets/images/icons/if-icon-gold.svg" type="image/svg+xml">
+    <meta name="theme-color" content="#1D2125">
+    <link rel="icon" href="assets/images/icons/if-icon.svg" type="image/svg+xml">
     <link rel="manifest" href="manifest.json">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/styles.css?v=1.1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400..700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..400,0,0&display=block" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/styles.css?v=1.3.0">
 </head>
 <body>
-    <nav>
-        <div class="nav-content">
-            <a href="#" id="nav-home-link" title="Infinite IF | Interactive Fiction App Powered by AI">
-                <img src="assets/images/icons/if-icon.svg" alt="Infinite IF">
-                <span>Infinite IF</span>
-            </a>
+    <header class="shell">
+        <a href="./" id="nav-home-link" class="brand">
+            <svg class="brand-mark" viewBox="0 -960 960 960" aria-hidden="true"><path d="M180-303q13-8 27.88-12.5Q222.77-320 240-320h40v-500h-40q-26 0-43 17.25T180-760v457Zm60 223q-50 0-85-35t-35-85v-560q0-50 35-85t85-35h290v60H340v500h260v-130h60v190H240q-25.5 0-42.75 17.25T180-200q0 25.5 17.25 42.75T240-140h540v-350h60v410H240Zm-60-223v-517 517Zm520-187q0-87.82 61.09-148.91T910-700q-87.82 0-148.91-61.09T700-910q0 87.82-61.09 148.91T490-700q87.82 0 148.91 61.09T700-490Z"/></svg>
+            <span>Infinite IF</span>
+        </a>
+        <nav class="shell-actions" aria-label="App">
+            <button type="button" id="new-story-button" class="shell-button" hidden>
+                <span class="material-symbols-outlined" aria-hidden="true">add</span><span>New story</span>
+            </button>
+            <button type="button" id="saved-stories-icon" class="shell-button">
+                <span class="material-symbols-outlined" aria-hidden="true">auto_stories</span><span>Library</span>
+            </button>
+            <button type="button" id="settings-icon" class="shell-button">
+                <span class="material-symbols-outlined" aria-hidden="true">tune</span><span>Settings</span>
+            </button>
+        </nav>
+    </header>
+
+    <main id="start-screen" class="start">
+        <section class="start-intro">
+            <h1>Infinite IF</h1>
+            <p class="lede">Interactive fiction that a language model writes as you play. Pick where it begins, then read, choose, or type what you do next.</p>
+            <p class="setup-line" id="setup-line"></p>
+            <figure class="sample" aria-label="What a turn looks like">
+                <div class="transcript sample-transcript" data-ui>
+                    <p class="command-echo"><span class="prompt" aria-hidden="true">&gt;</span> follow the carved stones north</p>
+                    <article class="passage">
+                        <span class="passage-icon material-symbols-outlined" aria-hidden="true">door_front</span>
+                        <h2 class="room">A door in the hill</h2>
+                        <div class="prose"><p>The stones end at a round door set into the hillside. It is warm to the touch, and somewhere behind it, someone is humming.</p></div>
+                    </article>
+                    <ol class="choices sample-choices">
+                        <li><span class="choice"><kbd>1</kbd><span>Knock three times</span></span></li>
+                        <li><span class="choice"><kbd>2</kbd><span>Listen at the keyhole</span></span></li>
+                    </ol>
+                </div>
+                <figcaption>Each turn: a place, what happens there, and what you might do. Press a number or type your own move.</figcaption>
+            </figure>
+        </section>
+
+        <section class="start-worlds" aria-labelledby="worlds-heading">
+            <h2 id="worlds-heading">Where does it begin?</h2>
+            <ul id="start-buttons" class="worlds">
+                <li><button type="button" data-seed="A mysterious forest" data-icon="forest"><span class="material-symbols-outlined" aria-hidden="true">forest</span><span>A mysterious forest</span></button></li>
+                <li><button type="button" data-seed="An abandoned spaceship" data-icon="rocket_launch"><span class="material-symbols-outlined" aria-hidden="true">rocket_launch</span><span>An abandoned spaceship</span></button></li>
+                <li><button type="button" data-seed="A medieval castle" data-icon="castle"><span class="material-symbols-outlined" aria-hidden="true">castle</span><span>A medieval castle</span></button></li>
+                <li><button type="button" data-seed="A haunted mansion" data-icon="home"><span class="material-symbols-outlined" aria-hidden="true">home</span><span>A haunted mansion</span></button></li>
+                <li><button type="button" data-seed="A pirate ship" data-icon="directions_boat"><span class="material-symbols-outlined" aria-hidden="true">directions_boat</span><span>A pirate ship</span></button></li>
+                <li><button type="button" data-seed="A futuristic city" data-icon="location_city"><span class="material-symbols-outlined" aria-hidden="true">location_city</span><span>A futuristic city</span></button></li>
+                <li><button type="button" data-seed="An ancient Egyptian tomb" data-icon="account_balance"><span class="material-symbols-outlined" aria-hidden="true">account_balance</span><span>An ancient Egyptian tomb</span></button></li>
+                <li><button type="button" data-seed="A secret underground laboratory" data-icon="science"><span class="material-symbols-outlined" aria-hidden="true">science</span><span>A secret underground laboratory</span></button></li>
+            </ul>
+            <form id="custom-seed-form" class="own-beginning">
+                <label for="custom-seed-input">Or begin anywhere you like</label>
+                <div class="field-row">
+                    <input type="text" id="custom-seed-input" maxlength="300" autocomplete="off" placeholder="A lighthouse keeper finds a door in the fog" required>
+                    <button type="submit" id="custom-scenario-button" class="button-primary">Begin</button>
+                </div>
+            </form>
+        </section>
+    </main>
+
+    <main id="game-container" class="play" hidden>
+        <h1 id="book-title" class="book-title"></h1>
+        <ol id="story" class="transcript"></ol>
+        <div id="writing" class="passage-pending" hidden>
+            <span class="bar bar-room" aria-hidden="true"></span>
+            <span class="bar" aria-hidden="true"></span><span class="bar" aria-hidden="true"></span><span class="bar" aria-hidden="true"></span><span class="bar bar-short" aria-hidden="true"></span>
+            <p id="writing-note" class="writing-note" role="status"></p>
         </div>
-        <div id="loading-spinner">
-            <span class="material-symbols-outlined">hourglass_empty</span>
-        </div>
-        <span class="material-symbols-outlined" id="saved-stories-icon">list_alt</span>
-        <span class="material-symbols-outlined" id="reload-icon">refresh</span>
-        <span class="material-symbols-outlined" id="settings-icon">settings</span>
-    </nav>
-    <div id="start-screen">
-        <div id="start-buttons">
-            <button data-seed="A mysterious forest" data-icon="forest">
-                <span class="material-symbols-outlined">forest</span>
-                Explore a Mysterious Forest
-            </button>
-            <button data-seed="An abandoned spaceship" data-icon="rocket_launch">
-                <span class="material-symbols-outlined">rocket_launch</span>
-                Investigate an Abandoned Spaceship
-            </button>
-            <button data-seed="A medieval castle" data-icon="castle">
-                <span class="material-symbols-outlined">castle</span>
-                Enter a Medieval Castle
-            </button>
-            <button data-seed="A haunted mansion" data-icon="home">
-                <span class="material-symbols-outlined">home</span>
-                Explore a Haunted Mansion
-            </button>
-            <button data-seed="A pirate ship" data-icon="directions_boat">
-                <span class="material-symbols-outlined">directions_boat</span>
-                Sail on a Pirate Ship
-            </button>
-            <button data-seed="A futuristic city" data-icon="location_city">
-                <span class="material-symbols-outlined">location_city</span>
-                Discover a Futuristic City
-            </button>
-            <button data-seed="An ancient Egyptian tomb" data-icon="account_balance">
-                <span class="material-symbols-outlined">account_balance</span>
-                Uncover an Ancient Egyptian Tomb
-            </button>
-            <button data-seed="A secret underground laboratory" data-icon="science">
-                <span class="material-symbols-outlined">science</span>
-                Infiltrate a Secret Underground Lab
-            </button>
-            <button id="custom-scenario-button">
-                <span class="material-symbols-outlined">edit</span>
-                Create Your Own Adventure
-            </button>
-        </div>
-        <p class="footer-text">
-            <span class="material-symbols-outlined footer-icons">hotel_class</span>
-            <span>Surprises are possible.</span>
-            <span class="material-symbols-outlined footer-icons">view_list</span>
-            <span>v1.1.0</span>
-            <span class="material-symbols-outlined footer-icons">developer_mode</span>
-            <a href="https://nothans.com/ai" target="_blank">NotHans</a>
-        </p>
-    </div>
-    <div id="game-container" style="display: none;">
-        <div id="story"></div>
-        <div id="options-and-input">
-            <button id="restart-button" style="display: none;">
-                <span class="material-symbols-outlined" id="reload-icon">refresh</span> Start a New Story
-            </button>
-            <div class="scroll-arrow left" id="scroll-left" style="display: none;">
-                <span class="material-symbols-outlined">chevron_left</span>
+        <p id="status-message" role="status" aria-live="polite"></p>
+        <div id="turn-error" class="turn-error" role="alert" hidden>
+            <p id="turn-error-text"></p>
+            <div class="button-row">
+                <button type="button" id="retry-button" class="button-primary">Try again</button>
+                <button type="button" id="error-home-button" class="button-quiet" hidden>Back to the beginning</button>
             </div>
-            <div id="options"></div>
-            <div class="scroll-arrow right" id="scroll-right" style="display: none;">
-                <span class="material-symbols-outlined">chevron_right</span>
-            </div>
-            <div id="input-area">
-                <input type="text" id="user-input" placeholder="Type your choice here...">
-                <button id="submit-button">
-                    <span class="material-symbols-outlined">send</span>
+        </div>
+        <section id="options-and-input" class="turn-controls" aria-label="Your move">
+            <ol id="options" class="choices"></ol>
+            <form id="input-area" class="command">
+                <label for="user-input" class="visually-hidden">What do you do?</label>
+                <span class="prompt" aria-hidden="true">&gt;</span>
+                <input type="text" id="user-input" autocomplete="off" placeholder="Or type what you do">
+                <button type="submit" id="submit-button" class="button-primary">Go</button>
+            </form>
+            <div class="turn-tools">
+                <button type="button" id="voice-stop-button" class="button-quiet" hidden>
+                    <span class="material-symbols-outlined" aria-hidden="true">stop_circle</span><span>Stop reading aloud</span>
                 </button>
-                <button id="end-story-button" title="End story">
-                    End Story
-                </button>                
+                <button type="button" id="end-story-button" class="button-quiet">End the story</button>
             </div>
+            <div id="end-confirm" class="end-confirm" hidden>
+                <p>Write the ending now? The finished story goes to your library.</p>
+                <div class="button-row">
+                    <button type="button" id="end-confirm-yes" class="button-primary">Write the ending</button>
+                    <button type="button" id="end-confirm-no" class="button-quiet">Keep playing</button>
+                </div>
+            </div>
+        </section>
+        <section id="ending" class="ending" hidden aria-labelledby="ending-heading">
+            <h2 id="ending-heading">The end</h2>
+            <p>Saved to your library.</p>
+            <div class="button-row">
+                <button type="button" id="restart-button" class="button-primary">Start a new story</button>
+                <button type="button" id="ending-library-button" class="button-quiet">Open your library</button>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer" id="site-footer">
+        <p>Made by <a href="https://nothans.com/ai">Hans Scharler</a> with LightFun Games. <a href="https://github.com/nothans/if">Source on GitHub</a>.</p>
+    </footer>
+
+    <dialog id="settings-modal" class="sheet" aria-labelledby="settings-title">
+        <div class="sheet-head">
+            <h2 id="settings-title">Settings</h2>
+            <button type="button" class="close button-icon" aria-label="Close settings"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
         </div>
-    </div>    
-    <div id="settings-modal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Settings</h2>
+        <p id="settings-note" class="settings-note" role="status"></p>
+        <section class="settings-section" aria-labelledby="settings-story-heading">
+            <h3 id="settings-story-heading">Who writes the story</h3>
             <div class="settings-group">
-                <label for="ai-service-select">AI Service Provider:</label>
+                <label for="ai-service-select">AI service</label>
                 <select id="ai-service-select">
                     <option value="openai">OpenAI</option>
                     <option value="anthropic">Anthropic (Claude)</option>
                     <option value="azure">Azure OpenAI</option>
                     <option value="openrouter">OpenRouter</option>
+                    <option value="ollama">Ollama (on your computer)</option>
                 </select>
             </div>
             <div class="settings-group" id="openai-settings-group">
-                <label for="openai-key-input">OpenAI API Key:</label>
-                <input type="text" id="openai-key-input" placeholder="Enter your OpenAI API Key">
+                <label for="openai-key-input">OpenAI API key</label>
+                <input type="password" id="openai-key-input" autocomplete="off" spellcheck="false" placeholder="sk-...">
             </div>
             <div class="settings-group" id="anthropic-settings-group" style="display: none;">
-                <label for="anthropic-key-input">Anthropic API Key:</label>
-                <input type="text" id="anthropic-key-input" placeholder="Enter your Anthropic API Key">
+                <label for="anthropic-key-input">Anthropic API key</label>
+                <input type="password" id="anthropic-key-input" autocomplete="off" spellcheck="false" placeholder="sk-ant-...">
             </div>
             <div class="settings-group" id="openrouter-settings-group" style="display: none;">
-                <label for="openrouter-key-input">OpenRouter API Key:</label>
-                <input type="text" id="openrouter-key-input" placeholder="Enter your OpenRouter API Key">
+                <label for="openrouter-key-input">OpenRouter API key</label>
+                <input type="password" id="openrouter-key-input" autocomplete="off" spellcheck="false" placeholder="sk-or-...">
             </div>
             <div class="settings-group" id="azure-settings-group" style="display: none;">
-                <label for="azure-endpoint-input">Azure OpenAI Endpoint URL:</label>
-                <input type="text" id="azure-endpoint-input" placeholder="Enter your Azure OpenAI Endpoint URL">
-                <label for="azure-key-input">Azure OpenAI Key:</label>
-                <input type="text" id="azure-key-input" placeholder="Enter your Azure OpenAI Key">
+                <label for="azure-endpoint-input">Azure OpenAI endpoint URL</label>
+                <input type="text" id="azure-endpoint-input" autocomplete="off" spellcheck="false" placeholder="https://your-resource.openai.azure.com/openai/v1/chat/completions">
+                <label for="azure-key-input">Azure OpenAI key</label>
+                <input type="password" id="azure-key-input" autocomplete="off" spellcheck="false">
+            </div>
+            <div class="settings-group" id="ollama-settings-group" style="display: none;">
+                <label for="ollama-url-input">Ollama URL</label>
+                <input type="text" id="ollama-url-input" autocomplete="off" spellcheck="false" placeholder="http://localhost:11434">
             </div>
             <div class="settings-group" id="model-settings-group">
-                <label for="model-input" id="model-label">Model:</label>
-                <input type="text" id="model-input" list="model-options" placeholder="Pick or enter a model ID">
+                <label for="model-input" id="model-label">Model</label>
+                <div class="field-row">
+                    <input type="text" id="model-input" list="model-options" autocomplete="off" spellcheck="false" placeholder="Pick or enter a model ID">
+                    <button type="button" id="refresh-models-button" class="button-quiet">Load available models</button>
+                </div>
                 <datalist id="model-options"></datalist>
-                <button type="button" id="refresh-models-button">Load available models</button>
-                <span id="model-list-status"></span>
+                <p id="model-list-status" class="field-note" aria-live="polite"></p>
             </div>
-            <div class="settings-group" id="tts-group">
-                <label for="tts-checkbox">Enable Text-to-Speech:</label>
-                <input type="checkbox" id="tts-checkbox">
-            </div>
-            <div class="settings-group" id="voice-selection-group" style="display: none;">
-                <label for="voice-select">Select Voice:</label>
-                <select id="voice-select">
-                    <option value="alloy">Alloy</option>
-                    <option value="ash">Ash</option>
-                    <option value="ballad">Ballad</option>
-                    <option value="coral">Coral</option>
-                    <option value="echo">Echo</option>
-                    <option value="fable">Fable</option>
-                    <option value="nova">Nova</option>
-                    <option value="onyx" selected>Onyx</option>
-                    <option value="sage">Sage</option>
-                    <option value="shimmer">Shimmer</option>
-                    <option value="verse">Verse</option>
+            <p class="field-note">Keys stay in this browser and go only to the service you pick.</p>
+        </section>
+        <section class="settings-section" aria-labelledby="settings-voice-heading">
+            <h3 id="settings-voice-heading">Reading aloud</h3>
+            <div class="settings-group" id="speech-group">
+                <label for="speech-engine-select">Read the story aloud</label>
+                <select id="speech-engine-select">
+                    <option value="off">Off</option>
+                    <option value="browser">Built-in voice</option>
+                    <option value="openai">OpenAI</option>
+                    <option value="ollama">Ollama (Apple Silicon)</option>
                 </select>
             </div>
-            <div class="settings-group">
-                <label for="writing-style-input">Writing Style:</label>
-                <textarea id="writing-style-input" placeholder="Enter a custom writing style"></textarea>
+            <div class="settings-group" id="voice-selection-group" style="display: none;">
+                <label for="voice-select">Voice</label>
+                <select id="voice-select"></select>
+                <p id="speech-status" class="field-note"></p>
             </div>
-            <button id="save-settings-button">Save Settings</button>
+        </section>
+        <section class="settings-section" aria-labelledby="settings-style-heading">
+            <h3 id="settings-style-heading">Writing style</h3>
+            <div class="settings-group">
+                <label for="writing-style-input">How should the story be written?</label>
+                <textarea id="writing-style-input" rows="2" placeholder="Talk like a pirate. Write like a ship's log. Keep it short and scary."></textarea>
+            </div>
+        </section>
+        <div class="sheet-foot">
+            <button type="button" id="save-settings-button" class="button-primary">Save settings</button>
         </div>
-    </div>
+    </dialog>
 
-    <div id="saved-stories-modal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Saved Stories</h2>
-            <div id="saved-stories-list"></div>
+    <dialog id="saved-stories-modal" class="sheet" aria-labelledby="library-title">
+        <div class="sheet-head">
+            <h2 id="library-title">Library</h2>
+            <button type="button" class="close button-icon" aria-label="Close library"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
         </div>
-    </div>
+        <div id="saved-stories-list"></div>
+    </dialog>
 
-    <div id="story-view-modal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2 id="story-view-title"></h2>
-            <div id="story-view-content"></div>
+    <dialog id="story-view-modal" class="sheet sheet-reader" aria-labelledby="story-view-title">
+        <div class="sheet-head">
+            <button type="button" id="story-view-back" class="button-quiet"><span class="material-symbols-outlined" aria-hidden="true">arrow_back</span><span>Library</span></button>
+            <button type="button" class="close button-icon" aria-label="Close story"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
         </div>
-    </div>
+        <h2 id="story-view-title" class="book-title"></h2>
+        <p id="story-view-meta" class="book-meta"></p>
+        <ol id="story-view-content" class="transcript"></ol>
+    </dialog>
 
-    <script src="assets/js/icons.js?v=1.1.0"></script>
-    <script src="assets/js/app.js?v=1.1.0"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/timeago.js/4.0.2/timeago.min.js"></script>
+    <script src="assets/js/icons.js?v=1.3.0"></script>
+    <script src="assets/js/app.js?v=1.3.0"></script>
 </body>
 </html>
