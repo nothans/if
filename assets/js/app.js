@@ -172,6 +172,7 @@ function updateModelPicker() {
     document.getElementById('model-input').placeholder = provider.defaultModel || (service === 'ollama' ? 'Load available models to pick one' : 'Enter a model or deployment name');
     document.getElementById('refresh-models-button').style.display = service === 'azure' ? 'none' : 'inline-block';
     document.getElementById('model-list-status').textContent = '';
+    closeModelList();
     setModelOptions(provider.suggestedModels);
 }
 
@@ -201,15 +202,123 @@ async function updateVoicePicker() {
     draftVoices[engine] = select.value;
 }
 
+// Model picker: type any model ID, or open the list and pick one. The list opens on a click or
+// the down arrow showing every model, and filters on any part of a name once you type.
+const modelCombo = document.getElementById('model-combo');
+const modelInput = document.getElementById('model-input');
+const modelList = document.getElementById('model-listbox');
+let modelChoices = [];
+let modelMatches = [];
+let modelActive = -1;
+let modelFiltering = false;
+
 function setModelOptions(modelIds) {
-    const datalist = document.getElementById('model-options');
-    datalist.innerHTML = '';
-    modelIds.forEach(id => {
-        const option = document.createElement('option');
-        option.value = id;
-        datalist.appendChild(option);
-    });
+    modelChoices = [...new Set(modelIds)];
+    if (!modelList.hidden) renderModelList();
 }
+
+function renderModelList() {
+    const terms = modelFiltering ? modelInput.value.toLowerCase().split(/\s+/).filter(Boolean) : [];
+    modelMatches = modelChoices.filter(id => terms.every(term => id.toLowerCase().includes(term)));
+    modelActive = Math.min(modelActive, modelMatches.length - 1);
+    modelList.textContent = '';
+    modelMatches.forEach((id, index) => {
+        const option = document.createElement('li');
+        option.id = `model-option-${index}`;
+        option.setAttribute('role', 'option');
+        option.setAttribute('aria-selected', String(id === modelInput.value.trim()));
+        option.textContent = id;
+        if (index === modelActive) option.classList.add('active');
+        // Keep focus in the field, so picking with the mouse doesn't blur and close first.
+        option.addEventListener('mousedown', event => event.preventDefault());
+        option.addEventListener('click', () => pickModel(id));
+        modelList.append(option);
+    });
+    if (modelMatches.length === 0) {
+        const note = document.createElement('li');
+        note.className = 'combo-note';
+        note.setAttribute('role', 'presentation');
+        note.textContent = modelChoices.length
+            ? 'No model matches. The ID as typed will be used.'
+            : 'No list loaded yet. Load available models, or type a model ID.';
+        modelList.append(note);
+    }
+    if (modelActive >= 0) {
+        modelInput.setAttribute('aria-activedescendant', `model-option-${modelActive}`);
+        modelList.children[modelActive].scrollIntoView({ block: 'nearest' });
+    } else {
+        modelInput.removeAttribute('aria-activedescendant');
+    }
+}
+
+function openModelList() {
+    if (!modelList.hidden) return;
+    modelFiltering = false;
+    modelActive = modelChoices.indexOf(modelInput.value.trim());
+    modelList.hidden = false;
+    modelCombo.classList.add('open');
+    modelInput.setAttribute('aria-expanded', 'true');
+    renderModelList();
+}
+
+function closeModelList() {
+    modelList.hidden = true;
+    modelCombo.classList.remove('open');
+    modelInput.setAttribute('aria-expanded', 'false');
+    modelInput.removeAttribute('aria-activedescendant');
+    modelActive = -1;
+}
+
+function pickModel(id) {
+    modelInput.value = id;
+    draftModels[selectedService()] = id;
+    closeModelList();
+    modelInput.focus();
+}
+
+modelInput.addEventListener('click', openModelList);
+
+document.getElementById('model-toggle').addEventListener('click', () => {
+    if (modelList.hidden) {
+        openModelList();
+        modelInput.focus();
+    } else {
+        closeModelList();
+    }
+});
+
+modelInput.addEventListener('input', () => {
+    draftModels[selectedService()] = modelInput.value;
+    if (modelList.hidden) openModelList();
+    modelFiltering = true;
+    modelActive = 0;
+    renderModelList();
+});
+
+modelInput.addEventListener('keydown', event => {
+    const open = !modelList.hidden;
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        if (!open) return openModelList();
+        if (modelMatches.length === 0) return;
+        const step = event.key === 'ArrowDown' ? 1 : -1;
+        modelActive = (modelActive + step + modelMatches.length) % modelMatches.length;
+        renderModelList();
+    } else if (event.key === 'Enter' && open) {
+        event.preventDefault();
+        if (modelActive >= 0 && modelMatches[modelActive]) pickModel(modelMatches[modelActive]);
+        else closeModelList();
+    } else if (event.key === 'Escape' && open) {
+        // Close the list, not the Settings dialog around it.
+        event.preventDefault();
+        event.stopPropagation();
+        closeModelList();
+    } else if (event.key === 'Tab') {
+        closeModelList();
+    }
+});
+
+modelInput.addEventListener('blur', closeModelList);
 
 function saveSettings(settings) {
     localStorage.setItem('infinite-if-settings', JSON.stringify(settings));
@@ -1157,10 +1266,6 @@ document.getElementById('ai-service-select').addEventListener('change', function
     }
 });
 
-document.getElementById('model-input').addEventListener('input', function() {
-    draftModels[selectedService()] = this.value;
-});
-
 document.getElementById('speech-engine-select').addEventListener('change', updateSettingsModal);
 
 document.getElementById('voice-select').addEventListener('change', function() {
@@ -1234,7 +1339,7 @@ document.getElementById('refresh-models-button').addEventListener('click', async
             input.value = modelIds[0];
             draftModels.ollama = modelIds[0];
         }
-        status.textContent = `${modelIds.length} models available. Clear the field to browse them.`;
+        status.textContent = `${modelIds.length} models available.`;
     } catch (error) {
         console.error('Error loading models:', error);
         if (provider === selectedService()) {

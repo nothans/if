@@ -195,9 +195,91 @@ button {
     gap: 8px;
 }
 
-.field-row input {
+.field-row input,
+.field-row .combo {
     flex: 1 1 200px;
     min-width: 0;
+}
+
+/* Model picker: a field with a list that opens under it and filters as you type */
+.combo {
+    position: relative;
+}
+
+.combo input {
+    width: 100%;
+    padding-right: 44px;
+}
+
+.combo-toggle {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    background: none;
+    border: 0;
+    border-radius: var(--radius);
+    color: var(--muted);
+    cursor: pointer;
+}
+
+.combo-toggle:hover {
+    color: var(--ink);
+}
+
+.combo-toggle .material-symbols-outlined {
+    transition: transform 150ms var(--ease);
+}
+
+.combo.open .combo-toggle .material-symbols-outlined {
+    transform: rotate(180deg);
+}
+
+.combo-list {
+    position: absolute;
+    z-index: 5;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    max-height: 288px;
+    margin: 0;
+    padding: 4px;
+    overflow-y: auto;
+    list-style: none;
+    background: var(--ground);
+    border-radius: var(--radius);
+    box-shadow: 0 12px 32px rgba(10, 12, 14, 0.55);
+}
+
+.combo-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 36px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font: 400 15px/1.35 var(--sans);
+    overflow-wrap: anywhere;
+    cursor: pointer;
+}
+
+.combo-list li.active {
+    background: var(--surface-hover);
+}
+
+.combo-list li[aria-selected="true"]::after {
+    content: 'check';
+    font: 400 18px/1 'Material Symbols Outlined';
+    color: var(--accent-text);
+}
+
+.combo-list li.combo-note {
+    color: var(--muted);
+    cursor: default;
 }
 
 /* Shell */
