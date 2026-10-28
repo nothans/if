@@ -1208,7 +1208,9 @@ inputArea.addEventListener('submit', event => {
 // Press 1 to 9 to take a choice, unless typing somewhere.
 document.addEventListener('keydown', event => {
     if (gameContainer.hidden || event.altKey || event.ctrlKey || event.metaKey) return;
-    if (event.target.closest('input, textarea, select, dialog')) return;
+    // The command line has focus after each turn; while it is empty, a number still takes a choice.
+    const onEmptyCommandLine = event.target === userInput && userInput.value === '';
+    if (!onEmptyCommandLine && event.target.closest('input, textarea, select, dialog')) return;
     if (!/^[1-9]$/.test(event.key)) return;
     const button = optionsDiv.querySelectorAll('button')[Number(event.key) - 1];
     if (button && !button.disabled) {
